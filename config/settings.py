@@ -13,8 +13,8 @@ load_dotenv()
 # ─── Coinbase API ────────────────────────────────────────────────────────────
 COINBASE_API_KEY    = os.getenv("COINBASE_API_KEY", "")
 COINBASE_API_SECRET = os.getenv("COINBASE_API_SECRET", "")
-COINBASE_REST_URL   = "https://api.coinbase.com"
-COINBASE_WS_URL     = "wss://advanced-trade-ws.coinbase.com"
+COINBASE_REST_URL   = os.getenv("COINBASE_REST_URL", "https://api.coinbase.com")
+COINBASE_WS_URL     = os.getenv("COINBASE_WS_URL",  "wss://advanced-trade-ws.coinbase.com")
 
 # ─── Telegram Alerts ─────────────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
