@@ -1,0 +1,27 @@
+# Environment / secrets — never commit
+.env
+.env.local
+.env.*.local
+
+# Database (trade journal lives locally)
+db/trades.db
+*.db
+
+# Logs
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
