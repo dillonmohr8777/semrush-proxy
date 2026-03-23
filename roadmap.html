@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SaaS Implementation Roadmap</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: #f5f4f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 40px 48px 60px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── Ambient background ───────────────────────────────── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 55% at 15% 10%, rgba(59,130,246,0.045) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 85% 80%, rgba(99,102,241,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 50% 40%, rgba(16,185,129,0.025) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Subtle grid overlay ──────────────────────────────── */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,0,0,0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.028) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Floating particles canvas ────────────────────────── */
+    #particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.55;
+    }
+
+    /* ── Main content wrapper ─────────────────────────────── */
+    .wrap {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       PHASE GRID
+    ══════════════════════════════════════════════════════════ */
+    .phase-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 0;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    /* Phase card ─────────────────────────────────────────── */
+    .card {
+      border-radius: 14px;
+      padding: 18px 20px 18px 20px;
+      border: 1px solid rgba(255,255,255,0.85);
+      position: relative;
+      cursor: default;
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+
+      /* Glassmorphism */
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px) saturate(1.4);
+      -webkit-backdrop-filter: blur(12px) saturate(1.4);
+
+      /* 3-D elevation stack */
+      box-shadow:
+        0 1px 0   0   rgba(255,255,255,0.95) inset,   /* top inner highlight */
+        0 -1px 0  0   rgba(0,0,0,0.04)       inset,   /* bottom inner shadow */
+        0 2px  4px    rgba(0,0,0,0.06),
+        0 6px 14px    rgba(0,0,0,0.07),
+        0 16px 32px   rgba(0,0,0,0.055);
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 1px 0   0   rgba(255,255,255,0.95) inset,
+        0 -1px 0  0   rgba(0,0,0,0.04)       inset,
+        0 4px  8px    rgba(0,0,0,0.07),
+        0 10px 22px   rgba(0,0,0,0.09),
+        0 22px 40px   rgba(0,0,0,0.07);
+    }
+
+    /* Active/selected card (Phase 01) */
+    .card.active {
+      background: rgba(219,234,254,0.82);
+      border-color: rgba(147,197,253,0.7);
+      box-shadow:
+        0 1px 0   0   rgba(255,255,255,0.9)  inset,
+        0 -1px 0  0   rgba(59,130,246,0.08)  inset,
+        0 2px  4px    rgba(59,130,246,0.1),
+        0 6px 14px    rgba(59,130,246,0.12),
+        0 16px 32px   rgba(59,130,246,0.08);
+    }
+
+    /* Glossy top sheen */
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 50%;
+      border-radius: 14px 14px 0 0;
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.38) 0%,
+        rgba(255,255,255,0.00) 100%
+      );
+      pointer-events: none;
+    }
+
+    .phase-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #6b7280;
+      text-transform: none;
+      margin-bottom: 5px;
+    }
+
+    .card.active .phase-label { color: #2563eb; }
+
+    /* Icon row */
+    .card-icon {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 22px;
+      height: 22px;
+      opacity: 0.38;
+    }
+
+    .card-title {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1.25;
+      margin-bottom: 5px;
+    }
+
+    .card-desc {
+      font-size: 12.5px;
+      color: #4b5563;
+      line-height: 1.45;
+    }
+
+    .card.active .card-desc { color: #2563eb; }
+
+    /* ── Connector arrows ─────────────────────────────────── */
+    .arrow-h {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+    }
+
+    .arrow-h svg, .arrow-v svg {
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.18));
+    }
+
+    .arrow-v {
+      display: flex;
+      justify-content: flex-end;
+      padding-right: 24px;
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    /* Grid placement for 2-row × 3-col layout */
+    /* Row 1: cards 01 → 02 → 03 */
+    .c1  { grid-column: 1; grid-row: 1; }
+    .ah1 { grid-column: 2; grid-row: 1; }
+    .c2  { grid-column: 3; grid-row: 1; }
+    .ah2 { grid-column: 4; grid-row: 1; }
+    .c3  { grid-column: 5; grid-row: 1; }
+
+    /* Down arrow from col 5 row 1 to row 2 */
+    .av  { grid-column: 5; grid-row: 2; }
+
+    /* Row 2: cards 04 ← 05 ← 06 */
+    .c4  { grid-column: 1; grid-row: 3; }
+    .ah3 { grid-column: 2; grid-row: 3; }
+    .c5  { grid-column: 3; grid-row: 3; }
+    .ah4 { grid-column: 4; grid-row: 3; }
+    .c6  { grid-column: 5; grid-row: 3; }
+
+    /* ═══════════════════════════════════════════════════════
+       DETAIL PANEL
+    ══════════════════════════════════════════════════════════ */
+    .detail-panel {
+      border-radius: 14px;
+      padding: 24px 28px 20px;
+      margin-bottom: 36px;
+      background: rgba(245,244,240,0.80);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.75);
+      box-shadow:
+        0 1px 0 0   rgba(255,255,255,0.9)  inset,
+        0 2px  4px  rgba(0,0,0,0.04),
+        0 6px 16px  rgba(0,0,0,0.055);
+    }
+
+    .detail-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 14px;
+    }
+
+    .detail-list {
+      list-style: none;
+      margin-bottom: 18px;
+    }
+
+    .detail-list li {
+      position: relative;
+      padding-left: 20px;
+      font-size: 13.5px;
+      color: #374151;
+      line-height: 1.55;
+      margin-bottom: 7px;
+    }
+
+    .detail-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 7px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #3b82f6 0%, #2563eb 100%);
+      box-shadow: 0 0 4px rgba(59,130,246,0.5);
+    }
+
+    .risk-label {
+      font-size: 11.5px;
+      color: #9ca3af;
+      font-weight: 500;
+      margin-bottom: 7px;
+    }
+
+    .risk-bar-track {
+      height: 5px;
+      border-radius: 99px;
+      background: #e5e7eb;
+      overflow: visible;
+      position: relative;
+    }
+
+    .risk-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      width: 82%;
+      background: linear-gradient(90deg, #ef4444 0%, #f87171 50%, #fca5a5 100%);
+      box-shadow: 0 0 8px rgba(239,68,68,0.45), 0 0 2px rgba(239,68,68,0.7);
+      position: relative;
+    }
+
+    .risk-bar-fill::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 50%;
+      border-radius: 99px 99px 0 0;
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       TIMELINE
+    ══════════════════════════════════════════════════════════ */
+    .timeline-section { }
+
+    .timeline-heading {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: #9ca3af;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 148px 1fr 56px;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 0;
+    }
+
+    .timeline-label {
+      font-size: 12.5px;
+      color: #374151;
+      font-weight: 400;
+      line-height: 1.35;
+      padding-right: 12px;
+    }
+
+    .timeline-track {
+      position: relative;
+      height: 9px;
+    }
+
+    .timeline-bar {
+      position: absolute;
+      height: 100%;
+      border-radius: 99px;
+      top: 0;
+    }
+
+    /* per-phase glow colours */
+    .bar-blue   { background: linear-gradient(90deg, #60a5fa, #3b82f6); box-shadow: 0 0 7px rgba(59,130,246,0.5),  0 0 2px rgba(59,130,246,0.8); }
+    .bar-green  { background: linear-gradient(90deg, #34d399, #10b981); box-shadow: 0 0 7px rgba(16,185,129,0.5),  0 0 2px rgba(16,185,129,0.8); }
+    .bar-amber  { background: linear-gradient(90deg, #fbbf24, #d97706); box-shadow: 0 0 7px rgba(217,119,6,0.45),  0 0 2px rgba(217,119,6,0.7); }
+    .bar-orange { background: linear-gradient(90deg, #fb923c, #ea580c); box-shadow: 0 0 7px rgba(234,88,12,0.45),  0 0 2px rgba(234,88,12,0.7); }
+    .bar-indigo { background: linear-gradient(90deg, #818cf8, #4f46e5); box-shadow: 0 0 7px rgba(79,70,229,0.5),   0 0 2px rgba(79,70,229,0.8); }
+
+    /* Glossy sheen on bars */
+    .timeline-bar::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 45%;
+      border-radius: 99px 99px 0 0;
+      background: rgba(255,255,255,0.38);
+    }
+
+    .timeline-week {
+      font-size: 11.5px;
+      color: #6b7280;
+      font-weight: 500;
+      text-align: right;
+      line-height: 1.3;
+      padding-left: 8px;
+    }
+
+    /* ── SVG icon helpers ─────────────────────────────────── */
+    svg.icon { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Floating particles canvas -->
+<canvas id="particles"></canvas>
+
+<div class="wrap">
+
+  <!-- ═══════════════════════════════════
+       PHASE GRID
+  ════════════════════════════════════ -->
+  <div class="phase-grid">
+
+    <!-- Phase 01 -->
+    <div class="card active c1">
+      <svg class="card-icon icon" viewBox="0 0 22 22" fill="none" stroke="#2563eb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="12" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="12" width="7" height="7" rx="1.5"/>
+        <path d="M12 15.5h7M15.5 12v7"/>
+      </svg>
+      <div class="phase-label">Phase 01</div>
+      <div class="card-title">Current-state<br>assessment</div>
+      <div class="card-desc">Map workflows, data flows,<br>gaps</div>
+    </div>
+
+    <!-- Arrow 01→02 -->
+    <div class="arrow-h ah1">
+      <svg class="icon" width="32" height="14" viewBox="0 0 32 14" fill="none">
+        <defs>
+          <linearGradient id="ag1" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#9ca3af" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#6b7280"/>
+          </linearGradient>
+        </defs>
+        <path d="M2 7 H26" stroke="url(#ag1)" stroke-width="2" stroke-dasharray="4 3"/>
+        <path d="M22 3 L30 7 L22 11" stroke="#6b7280" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Phase 02 -->
+    <div class="card c2">
+      <svg class="card-icon icon" viewBox="0 0 22 22" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6h14M4 11h10M4 16h6"/>
+        <circle cx="17" cy="15" r="3.5"/>
+        <path d="M17 13.5v1.5l1 1"/>
+      </svg>
+      <div class="phase-label">Phase 02</div>
+      <div class="card-title">Scope &<br>sequencing</div>
+      <div class="card-desc">Lock modules, phases, go-live dates</div>
+    </div>
+
+    <!-- Arrow 02→03 -->
+    <div class="arrow-h ah2">
+      <svg class="icon" width="32" height="14" viewBox="0 0 32 14" fill="none">
+        <defs>
+          <linearGradient id="ag2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#9ca3af" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#6b7280"/>
+          </linearGradient>
+        </defs>
+        <path d="M2 7 H26" stroke="url(#ag2)" stroke-width="2" stroke-dasharray="4 3"/>
+        <path d="M22 3 L30 7 L22 11" stroke="#6b7280" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Phase 03 -->
+    <div class="card c3">
+      <svg class="card-icon icon" viewBox="0 0 22 22" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 3 L11 19M6 7 L11 3 L16 7"/>
+        <path d="M7 12 Q11 16 15 12"/>
+        <path d="M5 17h12"/>
+      </svg>
+      <div class="phase-label">Phase 03</div>
+      <div class="card-title">Data readiness</div>
+      <div class="card-desc">Cleanse, standardize, validate</div>
+    </div>
+
+    <!-- Down arrow (col 5) -->
+    <div class="av arrow-v">
+      <svg class="icon" width="14" height="28" viewBox="0 0 14 28" fill="none">
+        <defs>
+          <linearGradient id="agv" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#9ca3af" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#6b7280"/>
+          </linearGradient>
+        </defs>
+        <path d="M7 2 V22" stroke="url(#agv)" stroke-width="2" stroke-dasharray="4 3"/>
+        <path d="M3 18 L7 26 L11 18" stroke="#6b7280" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Phase 04 -->
+    <div class="card c4">
+      <svg class="card-icon icon" viewBox="0 0 22 22" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="10" width="6" height="9" rx="1.5"/>
+        <rect x="13" y="6" width="6" height="13" rx="1.5"/>
+        <path d="M9 14 L13 12"/>
+        <path d="M6 10 V6 M16 6 V3"/>
+        <circle cx="6" cy="5" r="1.5"/>
+        <circle cx="16" cy="2.5" r="1.5"/>
+      </svg>
+      <div class="phase-label">Phase 04</div>
+      <div class="card-title">Configuration &<br>integration</div>
+      <div class="card-desc">Build in parallel, not sequence</div>
+    </div>
+
+    <!-- Arrow 05→04 (reverse) -->
+    <div class="arrow-h ah3">
+      <svg class="icon" width="32" height="14" viewBox="0 0 32 14" fill="none">
+        <defs>
+          <linearGradient id="ag3" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stop-color="#9ca3af" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#6b7280"/>
+          </linearGradient>
+        </defs>
+        <path d="M30 7 H6" stroke="url(#ag3)" stroke-width="2" stroke-dasharray="4 3"/>
+        <path d="M10 3 L2 7 L10 11" stroke="#6b7280" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Phase 05 -->
+    <div class="card c5">
+      <svg class="card-icon icon" viewBox="0 0 22 22" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 11 L9 17 L19 6"/>
+        <circle cx="11" cy="11" r="8.5"/>
+      </svg>
+      <div class="phase-label">Phase 05</div>
+      <div class="card-title">Testing</div>
+      <div class="card-desc">End-to-end, integration, UAT</div>
+    </div>
+
+    <!-- Arrow 06→05 (reverse) -->
+    <div class="arrow-h ah4">
+      <svg class="icon" width="32" height="14" viewBox="0 0 32 14" fill="none">
+        <defs>
+          <linearGradient id="ag4" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stop-color="#9ca3af" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#6b7280"/>
+          </linearGradient>
+        </defs>
+        <path d="M30 7 H6" stroke="url(#ag4)" stroke-width="2" stroke-dasharray="4 3"/>
+        <path d="M10 3 L2 7 L10 11" stroke="#6b7280" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Phase 06 -->
+    <div class="card c6">
+      <svg class="card-icon icon" viewBox="0 0 22 22" fill="none" stroke="#6b7280" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 17 Q5 6 11 4 Q17 6 17 17"/>
+        <path d="M8 17 Q8 10 11 9 Q14 10 14 17"/>
+        <path d="M3 17h16"/>
+        <path d="M11 4 L11 2"/>
+      </svg>
+      <div class="phase-label">Phase 06</div>
+      <div class="card-title">Go-live &<br>hypercare</div>
+      <div class="card-desc">Readiness criteria + post-launch support</div>
+    </div>
+
+  </div><!-- /phase-grid -->
+
+
+  <!-- ═══════════════════════════════════
+       DETAIL PANEL
+  ════════════════════════════════════ -->
+  <div class="detail-panel">
+    <div class="detail-title">Current-state assessment</div>
+    <ul class="detail-list">
+      <li>Document every existing workflow touching supply chain operations</li>
+      <li>Identify where data lives and how it moves between legacy systems</li>
+      <li>Flag manual workarounds that will break in the new environment</li>
+      <li>Map supplier relationships, contracts, and data exchange formats</li>
+    </ul>
+    <div class="risk-label">Risk if skipped</div>
+    <div class="risk-bar-track">
+      <div class="risk-bar-fill"></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════
+       TIMELINE
+  ════════════════════════════════════ -->
+  <div class="timeline-section">
+    <div class="timeline-heading">Typical Timeline</div>
+
+    <!--
+      Total weeks ≈ 22.  Track width = 100%.
+      offset & width are expressed as % of the track.
+      Wk 0-22 → scale = 100/22 ≈ 4.545% per week.
+    -->
+
+    <!-- Current-state assessment  Wk 0-3 -->
+    <div class="timeline-row">
+      <div class="timeline-label">Current-state<br>assessment</div>
+      <div class="timeline-track">
+        <div class="timeline-bar bar-blue"
+             style="left:0%;width:13.6%"></div>
+      </div>
+      <div class="timeline-week">Wk 0–3</div>
+    </div>
+
+    <!-- Scope & sequencing  Wk 2-5 -->
+    <div class="timeline-row">
+      <div class="timeline-label">Scope &amp; sequencing</div>
+      <div class="timeline-track">
+        <div class="timeline-bar bar-blue"
+             style="left:9.1%;width:13.6%"></div>
+      </div>
+      <div class="timeline-week">Wk 2–5</div>
+    </div>
+
+    <!-- Data readiness  Wk 3-8 -->
+    <div class="timeline-row">
+      <div class="timeline-label">Data readiness</div>
+      <div class="timeline-track">
+        <div class="timeline-bar bar-green"
+             style="left:13.6%;width:22.7%"></div>
+      </div>
+      <div class="timeline-week">Wk 3–8</div>
+    </div>
+
+    <!-- Configuration & integration  Wk 5-14 -->
+    <div class="timeline-row">
+      <div class="timeline-label">Configuration &amp;<br>integration</div>
+      <div class="timeline-track">
+        <div class="timeline-bar bar-amber"
+             style="left:22.7%;width:40.9%"></div>
+      </div>
+      <div class="timeline-week">Wk 5–14</div>
+    </div>
+
+    <!-- Testing  Wk 11-17 -->
+    <div class="timeline-row">
+      <div class="timeline-label">Testing</div>
+      <div class="timeline-track">
+        <div class="timeline-bar bar-orange"
+             style="left:50%;width:27.3%"></div>
+      </div>
+      <div class="timeline-week">Wk 11–17</div>
+    </div>
+
+    <!-- Go-live & hypercare  Wk 16-22 -->
+    <div class="timeline-row">
+      <div class="timeline-label">Go-live &amp; hypercare</div>
+      <div class="timeline-track">
+        <div class="timeline-bar bar-indigo"
+             style="left:72.7%;width:27.3%"></div>
+      </div>
+      <div class="timeline-week">Wk 16–<br>22</div>
+    </div>
+
+  </div><!-- /timeline -->
+
+</div><!-- /wrap -->
+
+
+<!-- ── Particle animation ───────────────────────────── -->
+<script>
+(function () {
+  const canvas = document.getElementById('particles');
+  const ctx    = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const N = 38;
+  const pts = Array.from({ length: N }, () => ({
+    x:  Math.random() * window.innerWidth,
+    y:  Math.random() * window.innerHeight,
+    r:  Math.random() * 1.6 + 0.5,
+    vx: (Math.random() - 0.5) * 0.28,
+    vy: (Math.random() - 0.5) * 0.22,
+    a:  Math.random() * 0.35 + 0.12,
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Connections between nearby particles
+    for (let i = 0; i < N; i++) {
+      for (let j = i + 1; j < N; j++) {
+        const dx = pts[i].x - pts[j].x;
+        const dy = pts[i].y - pts[j].y;
+        const d  = Math.sqrt(dx * dx + dy * dy);
+        if (d < 140) {
+          ctx.beginPath();
+          ctx.moveTo(pts[i].x, pts[i].y);
+          ctx.lineTo(pts[j].x, pts[j].y);
+          ctx.strokeStyle = `rgba(100,130,180,${0.06 * (1 - d / 140)})`;
+          ctx.lineWidth = 0.7;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Dots
+    pts.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(100,130,190,${p.a})`;
+      ctx.fill();
+    });
+  }
+
+  function update() {
+    pts.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0 || p.x > canvas.width)  p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+    });
+  }
+
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+</script>
+
+</body>
+</html>
