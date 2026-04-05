@@ -1,0 +1,4 @@
+.env
+*.pyc
+__pycache__/
+coinbase_trading_bot/output/bot.log
