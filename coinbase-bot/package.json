@@ -1,0 +1,11 @@
+{
+  "name": "coinbase-paper-trader",
+  "version": "1.0.0",
+  "description": "Paper trading bot using Coinbase market data with virtual money",
+  "main": "bot.js",
+  "type": "module",
+  "scripts": {
+    "start": "node bot.js",
+    "trade": "node trade.js"
+  }
+}
