@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "obsidian-second-brain": {
+      "command": "node",
+      "args": ["./obsidian-second-brain/mcp-server/index.js"],
+      "env": {
+        "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
+        "OBSIDIAN_API_KEY": "YOUR_API_KEY_HERE"
+      }
+    }
+  }
+}
