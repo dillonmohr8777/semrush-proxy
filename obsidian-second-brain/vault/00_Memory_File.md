@@ -179,13 +179,6 @@
 - Geography: Portland, OR
 - Notes: New client (onboarding)
 
-### Cassell Consulting
-- Services provided: SEO, backlinks, blog posts, Google Ads, website maintenance
-- Website: https://cassellconsulting.com
-- Industry: Construction industry software consulting and training
-- Geography: Portland, OR
-- Notes: Meadow Creek client
-
 ### PNW ProClean
 - Services provided: SEO, backlinks, blog posts, Google Ads, website updates
 - Website: https://pnwproclean.net
@@ -248,27 +241,6 @@
 - Website: https://bluegrassjanitorial.com
 - Industry: E-commerce B2B - commercial cleaning supplies and equipment
 - Geography: Lexington, KY
-- Notes: Meadow Creek client
-
-### Allenbuild Instruments
-- Services provided: Blog posts, SEO, website updates
-- Website: https://allenbuildinstruments.com
-- Industry: Land surveying & engineering tools and software (B2B e-commerce)
-- Geography: North Carolina
-- Notes: Meadow Creek client
-
-### Air Duct Cleaning Hawaii
-- Services provided: [FILL IN]
-- Website: https://airductcleaninghawaii.com
-- Industry: Air duct cleaning
-- Geography: Hawaii
-- Notes: Meadow Creek client
-
-### Dusty Auto Detailing
-- Services provided: Website redesign, SEO, local service listings, ad management
-- Website: https://dustyautodetailing.com (being redesigned)
-- Industry: Mobile detailing
-- Geography: Bend, OR
 - Notes: Meadow Creek client
 
 ---
