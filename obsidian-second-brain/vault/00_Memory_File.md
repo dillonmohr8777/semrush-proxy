@@ -91,7 +91,7 @@
 
 ### Fresh Blends / Replenish
 - Commission: $500/mo
-- Website: https://freshblends.com
+- Website: https://freshblends.com / https://getreplenish.com
 - Industry: Food / beverage
 - Services: [FILL IN]
 - Work I do: Google Ads
@@ -141,7 +141,7 @@
 ### Buzz Bull
 - Relationship: 1099
 - Services provided: [FILL IN]
-- Website: [FILL IN]
+- Website: https://buzzbullmarketingsystems.com
 - Notes: Has additional clients under it (sub-clients)
 
 ---
@@ -156,7 +156,8 @@
 
 ### Florecita
 - Services provided: Google Ads, Meta Ads
-- Website: [FILL IN]
+- Website: https://florecitaphx.com
+- Geography: Phoenix, AZ
 - Google Ads Account ID: [FILL IN]
 - Notes:
 
@@ -165,42 +166,69 @@
 - Website: [FILL IN]
 - Notes:
 
-### Sally Compton
+### Sally Compton / Meadow Creek Marketing
 - Services provided: Content / SEO (9 blog posts)
-- Website: [FILL IN]
-- Notes: Primarily blog content
-
-### PNW Pro Clean
-- Services provided: [FILL IN]
-- Website: [FILL IN]
-- Industry: Cleaning services
-- Geography: Pacific Northwest
-- Notes:
-
-### PureClean Carpets
-- Services provided: [FILL IN]
-- Website: [FILL IN]
-- Industry: Carpet cleaning
-- Notes:
-
-### Ram Air
-- Services provided: [FILL IN]
-- Website: [FILL IN]
-- Industry: HVAC / air duct cleaning
-- Notes:
-
-### Bluegrass Janitorial / Kentucky Cleaning Solutions
-- Services provided: [FILL IN]
-- Website: [FILL IN]
-- Industry: Commercial cleaning
-- Geography: Kentucky
-- Notes: Two brand names, same business
+- Website: Meadow Creek Marketing (agency she runs)
+- Geography: Bend, OR
+- Notes: Sally runs Meadow Creek Marketing. Many of the direct clients below are managed through/with her agency. Meadow Creek handles their day-to-day marketing.
 
 ### Bridge of Hope OTC
+- Services provided: SEO, Google Business profile, content, social media
+- Website: https://bridgeofhope-otc.com
+- Industry: Community support / nonprofit
+- Geography: Portland, OR
+- Notes: New client (onboarding)
+
+### Cassell Consulting
+- Services provided: SEO, backlinks, blog posts, Google Ads, website maintenance
+- Website: https://cassellconsulting.com
+- Industry: Construction industry software consulting and training
+- Geography: Portland, OR
+- Notes: Meadow Creek client
+
+### PNW ProClean
+- Services provided: SEO, backlinks, blog posts, Google Ads, website updates
+- Website: https://pnwproclean.net
+- Industry: Residential and commercial air duct and dryer vent cleaning
+- Geography: Portland, OR
+- Notes: Meadow Creek client
+
+### Bend Plastic Surgery (BPS)
+- Services provided: Email marketing, SEO, website updates, Google Ads, Google My Business, event marketing
+- Website: https://bendplasticsurgery.com
+- Also owns: Angeles Wound Care Institute (https://awcinstitute.com)
+- Landing page site: https://lp.bendplasticsurgery.com
+- Industry: Plastic and reconstructive surgery
+- Geography: Bend, OR
+- Notes: Meadow Creek client. Two websites to manage (BPS + AWCI).
+
+### Bend Oral Surgery
+- Services provided: SEO, website maintenance and security, Google My Business
+- Website: https://bendoralsurgery.com
+- Industry: Oral, facial, and implant surgery
+- Geography: Bend, OR
+- Notes: Meadow Creek client
+
+### RamAir International
+- Services provided: All marketing, SEO, content, website, design, digital presence, e-commerce
+- Website: https://ramair.co
+- Industry: Air duct cleaning equipment manufacturer
+- Geography: Bend, OR
+- Notes: Meadow Creek client. Owns Guarantee Cleaning as sub-brand.
+
+### Guarantee Cleaning
+- Services provided: All marketing, SEO, content, web updates, Google Ads, social media
+- Website: https://guaranteecleaning.com
+- Industry: Air duct cleaning services
+- Geography: Bend, OR
+- Notes: Owned by RamAir. Meadow Creek client.
+
+### Oregon Biohazard Remediation
 - Services provided: [FILL IN]
-- Website: [FILL IN]
-- Industry: Nonprofit
-- Notes:
+- Website: https://oregonbiohazardremediation.com
+- Industry: Biohazard cleanup
+- Geography: Oregon
+- Notes: Meadow Creek client
 
 ### Dryer Vent John
 - Services provided: [FILL IN]
@@ -208,31 +236,40 @@
 - Industry: Dryer vent cleaning
 - Notes:
 
-### Biohazard Remediation
-- Services provided: [FILL IN]
-- Website: [FILL IN]
-- Industry: Biohazard cleanup
-- Notes:
+### PureClean Carpets
+- Services provided: Blog posts, email campaigns, website updates, Google Ads, outreach
+- Website: https://purecleancarpets.com
+- Industry: Residential & commercial carpet, tile, upholstery, and air duct cleaning
+- Geography: Lexington, KY
+- Notes: Meadow Creek client
 
-### Guaranteed Cleaning
-- Services provided: [FILL IN]
-- Website: [FILL IN]
-- Industry: Cleaning services
-- Notes:
+### Bluegrass Janitorial
+- Services provided: SEO, backlinks, blog posts, email marketing, social posts, website updates, landing pages, Google Ads
+- Website: https://bluegrassjanitorial.com
+- Industry: E-commerce B2B - commercial cleaning supplies and equipment
+- Geography: Lexington, KY
+- Notes: Meadow Creek client
 
-### Bend Plastic Surgery
+### Allenbuild Instruments
+- Services provided: Blog posts, SEO, website updates
+- Website: https://allenbuildinstruments.com
+- Industry: Land surveying & engineering tools and software (B2B e-commerce)
+- Geography: North Carolina
+- Notes: Meadow Creek client
+
+### Air Duct Cleaning Hawaii
 - Services provided: [FILL IN]
-- Website: [FILL IN]
-- Industry: Medical / cosmetic surgery
+- Website: https://airductcleaninghawaii.com
+- Industry: Air duct cleaning
+- Geography: Hawaii
+- Notes: Meadow Creek client
+
+### Dusty Auto Detailing
+- Services provided: Website redesign, SEO, local service listings, ad management
+- Website: https://dustyautodetailing.com (being redesigned)
+- Industry: Mobile detailing
 - Geography: Bend, OR
-- Notes:
-
-### Bend Oral Surgery
-- Services provided: [FILL IN]
-- Website: [FILL IN]
-- Industry: Medical / oral surgery
-- Geography: Bend, OR
-- Notes:
+- Notes: Meadow Creek client
 
 ---
 
