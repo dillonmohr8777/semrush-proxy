@@ -37,7 +37,7 @@
 - Services: Bar crawl events
 - Work I do: Google Ads, landing page management, on-page SEO
 - Geography: Chattanooga + expanding to other cities
-- Google Ads Account ID: [FILL IN]
+- Google Ads Account ID: 435-710-2897
 - Notes:
 
 ### Shadow HVAC
@@ -47,7 +47,7 @@
 - Services: Heating, cooling, installation, repair
 - Work I do: Google Ads + GMB postings
 - Geography: [FILL IN]
-- Google Ads Account ID: [FILL IN]
+- Google Ads Account ID: 314-136-4176
 - Notes:
 
 ### Link Eze
@@ -57,7 +57,7 @@
 - Services: [FILL IN]
 - Work I do: Google Ads
 - Geography: [FILL IN]
-- Google Ads Account ID: [FILL IN]
+- Google Ads Account ID: 809-600-6448
 - Notes:
 
 ### Omega Landscaping
@@ -76,6 +76,7 @@
 - Services: Real estate agent
 - Work I do: Meta Ads
 - Geography: [FILL IN]
+- Google Ads Account ID: 495-602-9145 (setup in progress)
 - Notes:
 
 ### Kimberly James Bridal Boutique (KJB)
@@ -85,7 +86,7 @@
 - Services: Bridal boutique, wedding dresses
 - Work I do: Google Ads
 - Geography: [FILL IN]
-- Google Ads Account ID: [FILL IN]
+- Google Ads Account ID: 721-491-4099 (New), 814-550-6229 (original)
 - Notes:
 
 ### Fresh Blends / Replenish
@@ -95,7 +96,7 @@
 - Services: [FILL IN]
 - Work I do: Google Ads
 - Geography: [FILL IN]
-- Google Ads Account ID: [FILL IN]
+- Google Ads Account ID: 627-501-4654 (setup in progress)
 - Notes: Also goes by Replenish
 
 ### Hardwood Artisan
@@ -114,8 +115,8 @@
 - Services: [FILL IN]
 - Work I do: Google Ads, Meta Ads
 - Geography: [FILL IN]
-- Google Ads Account ID: [FILL IN]
-- Notes:
+- Google Ads Account ID: 100-209-6937
+- Notes: Full name: New Kensington Community Development Corporation
 
 ### Onsite Concrete
 - Commission: [FILL IN]
