@@ -35,6 +35,7 @@
 - Website: https://barcrawlusa.com
 - Industry: Events / entertainment
 - Services: Bar crawl events
+- Work I do: Google Ads, landing page management, on-page SEO
 - Geography: Chattanooga + expanding to other cities
 - Google Ads Account ID: [FILL IN]
 - Notes:
@@ -53,6 +54,7 @@
 - Website: https://linkeze.biz
 - Industry: [FILL IN]
 - Services: [FILL IN]
+- Work I do: Google Ads
 - Geography: [FILL IN]
 - Google Ads Account ID: [FILL IN]
 - Notes:
@@ -71,8 +73,8 @@
 - Website: https://jeffhozias.randrealty.com
 - Industry: Real estate
 - Services: Real estate agent
+- Work I do: Meta Ads
 - Geography: [FILL IN]
-- Google Ads Account ID: [FILL IN]
 - Notes:
 
 ### Kimberly James Bridal Boutique (KJB)
@@ -80,18 +82,20 @@
 - Website: https://kimberlyjamesbridal.com
 - Industry: Bridal / wedding
 - Services: Bridal boutique, wedding dresses
+- Work I do: Google Ads
 - Geography: [FILL IN]
 - Google Ads Account ID: [FILL IN]
 - Notes:
 
-### Fresh Blends
+### Fresh Blends / Replenish
 - Commission: $500/mo
 - Website: https://freshblends.com
 - Industry: Food / beverage
 - Services: [FILL IN]
+- Work I do: Google Ads
 - Geography: [FILL IN]
 - Google Ads Account ID: [FILL IN]
-- Notes:
+- Notes: Also goes by Replenish
 
 ### Hardwood Artisan
 - Commission: [FILL IN]
@@ -107,6 +111,7 @@
 - Website: [FILL IN]
 - Industry: Community development
 - Services: [FILL IN]
+- Work I do: Google Ads, Meta Ads
 - Geography: [FILL IN]
 - Google Ads Account ID: [FILL IN]
 - Notes:
@@ -116,6 +121,7 @@
 - Website: [FILL IN]
 - Industry: Concrete / construction
 - Services: [FILL IN]
+- Work I do: Google Ads
 - Geography: [FILL IN]
 - Google Ads Account ID: [FILL IN]
 - Notes:
