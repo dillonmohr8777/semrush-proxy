@@ -266,6 +266,105 @@ const TEMPLATES = {
 
 ## Notes
 -`,
+
+  transcript: `# Transcript - {{Client}} - {{Date}}
+
+## Call Type
+-
+
+## Participants
+-
+
+## Summary
+-
+
+## Key Points
+-
+
+## Decisions Made
+-
+
+## Action Items
+- [ ]
+
+## Quotes / Important Statements
+-
+
+## Follow Up Needed
+-
+
+## Raw Transcript
+\`\`\`
+{{Transcript}}
+\`\`\``,
+
+  "session-log": `# Session Log - {{Date}}
+
+## What Was Done
+-
+
+## Clients Touched
+-
+
+## Actions Created
+- [ ]
+
+## Decisions Made
+-
+
+## Patterns Noticed
+-
+
+## What's Next
+-`,
+
+  "weekly-review": `# Weekly Review - {{Date}}
+
+## Client Status Overview
+
+### Hardwood Artisan
+- Status:
+- Key Metrics:
+- What Changed:
+- Next Actions:
+
+### Omega Landscape
+- Status:
+- Key Metrics:
+- What Changed:
+- Next Actions:
+
+### NKCDC
+- Status:
+- Key Metrics:
+- What Changed:
+- Next Actions:
+
+### Bar Crawl USA
+- Status:
+- Key Metrics:
+- What Changed:
+- Next Actions:
+
+### KJB
+- Status:
+- Key Metrics:
+- What Changed:
+- Next Actions:
+
+## Wins This Week
+-
+
+## Problems Found
+-
+
+## Patterns Noticed
+-
+
+## Top Priorities Next Week
+1.
+2.
+3.`,
 };
 
 function renderTemplate(templateName, variables = {}) {
@@ -284,12 +383,15 @@ function renderTemplate(templateName, variables = {}) {
 // ── Folder mapping for templates ───────────────────────────────────────────
 const TEMPLATE_FOLDERS = {
   client: "01_Clients",
-  meeting: "01_Clients",
+  meeting: "01_Clients/Meetings",
   "content-idea": "03_Content",
   "daily-note": "07_Daily_Notes",
   campaign: "02_Campaigns",
   sop: "04_SOPs",
   offer: "05_Offers",
+  transcript: "09_Transcripts",
+  "session-log": "10_Sessions",
+  "weekly-review": "07_Daily_Notes",
 };
 
 // ── MCP Server Setup ───────────────────────────────────────────────────────
@@ -421,14 +523,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: "create_from_template",
       description:
-        "Create a new note from a template. Templates: client, meeting, content-idea, daily-note, campaign, sop, offer. Automatically places the note in the correct folder.",
+        "Create a new note from a template. Templates: client, meeting, content-idea, daily-note, campaign, sop, offer, transcript, session-log, weekly-review. Automatically places the note in the correct folder.",
       inputSchema: {
         type: "object",
         properties: {
           template: {
             type: "string",
             description:
-              "Template name: client, meeting, content-idea, daily-note, campaign, sop, offer",
+              "Template name: client, meeting, content-idea, daily-note, campaign, sop, offer, transcript, session-log, weekly-review",
             enum: [
               "client",
               "meeting",
@@ -437,6 +539,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
               "campaign",
               "sop",
               "offer",
+              "transcript",
+              "session-log",
+              "weekly-review",
             ],
           },
           filename: {
@@ -483,6 +588,109 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
             type: "string",
             description:
               "Date in YYYY-MM-DD format. Defaults to today if not provided.",
+          },
+        },
+      },
+    },
+    {
+      name: "read_memory_file",
+      description:
+        "Read the Memory File - the master context document. ALWAYS call this at the start of a session to load full context about who Dillon is, his clients, processes, preferences, routing rules, and accumulated learnings.",
+      inputSchema: {
+        type: "object",
+        properties: {},
+      },
+    },
+    {
+      name: "update_memory_file",
+      description:
+        "Append a new learning, pattern, or important context to the Memory File's 'Patterns and Learnings' section. Use this when you discover something reusable across clients or sessions.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          learning: {
+            type: "string",
+            description: "The pattern, learning, or context to add (will be prefixed with date)",
+          },
+        },
+        required: ["learning"],
+      },
+    },
+    {
+      name: "process_transcript",
+      description:
+        "Process a raw meeting transcript. Creates a structured transcript note in 09_Transcripts, extracts action items, key decisions, and follow-ups. Returns the structured output for further routing (update client note, log decisions, create tasks).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          client: {
+            type: "string",
+            description: "Client name this transcript is for",
+          },
+          raw_transcript: {
+            type: "string",
+            description: "The raw transcript text to process",
+          },
+          call_type: {
+            type: "string",
+            description: "Type of call: discovery, check-in, strategy, review, onboarding",
+          },
+          date: {
+            type: "string",
+            description: "Date of the call (YYYY-MM-DD). Defaults to today.",
+          },
+        },
+        required: ["client", "raw_transcript"],
+      },
+    },
+    {
+      name: "log_session",
+      description:
+        "Log what was accomplished in this session. Creates a session log in 10_Sessions and appends a summary to today's daily note. Call this at the end of every meaningful work session.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          summary: {
+            type: "string",
+            description: "What was done in this session",
+          },
+          clients_touched: {
+            type: "array",
+            items: { type: "string" },
+            description: "List of clients worked on",
+          },
+          actions_created: {
+            type: "array",
+            items: { type: "string" },
+            description: "New action items created",
+          },
+          decisions_made: {
+            type: "array",
+            items: { type: "string" },
+            description: "Decisions that were made",
+          },
+          patterns: {
+            type: "string",
+            description: "Any patterns or learnings noticed",
+          },
+          next_steps: {
+            type: "string",
+            description: "What should happen next",
+          },
+        },
+        required: ["summary"],
+      },
+    },
+    {
+      name: "get_open_actions",
+      description:
+        "Search across all client notes for open action items (unchecked checkboxes). Returns a consolidated list of everything that's pending across all clients.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          client: {
+            type: "string",
+            description: "Filter to a specific client (optional - omit for all clients)",
           },
         },
       },
@@ -587,6 +795,125 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           return {
             content: [
               { type: "text", text: `Created daily note for ${date} at ${path}` },
+            ],
+          };
+        }
+      }
+
+      case "read_memory_file": {
+        try {
+          const content = await readNote("00_Memory_File.md");
+          return {
+            content: [{ type: "text", text: content }],
+          };
+        } catch {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Memory File not found at 00_Memory_File.md. Create one to enable persistent context.",
+              },
+            ],
+          };
+        }
+      }
+
+      case "update_memory_file": {
+        const date = new Date().toISOString().split("T")[0];
+        const entry = `\n- [${date}] ${args.learning}`;
+        const result = await updateNote("00_Memory_File.md", entry);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Learning added to Memory File: ${args.learning}`,
+            },
+          ],
+        };
+      }
+
+      case "process_transcript": {
+        const date = args.date || new Date().toISOString().split("T")[0];
+        const content = renderTemplate("transcript", {
+          Client: args.client,
+          Date: date,
+          Transcript: args.raw_transcript,
+        });
+
+        const filename = `${date} - ${args.client}${args.call_type ? ` - ${args.call_type}` : ""}`;
+        const path = `09_Transcripts/${filename}.md`;
+        await writeNote(path, content);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Transcript saved to ${path}\n\nNext steps:\n1. Read the transcript to extract action items, decisions, and key points\n2. Update the client note at 01_Clients/${args.client}.md\n3. Log any decisions to the Decision Log\n4. Add action items to the client's Next Actions section\n5. Note any follow-ups needed`,
+            },
+          ],
+        };
+      }
+
+      case "log_session": {
+        const date = new Date().toISOString().split("T")[0];
+        const clients = args.clients_touched || [];
+        const actions = args.actions_created || [];
+        const decisions = args.decisions_made || [];
+
+        let sessionContent = `# Session Log - ${date}\n\n`;
+        sessionContent += `## What Was Done\n${args.summary}\n\n`;
+        sessionContent += `## Clients Touched\n${clients.length > 0 ? clients.map((c) => `- ${c}`).join("\n") : "- None"}\n\n`;
+        sessionContent += `## Actions Created\n${actions.length > 0 ? actions.map((a) => `- [ ] ${a}`).join("\n") : "- None"}\n\n`;
+        sessionContent += `## Decisions Made\n${decisions.length > 0 ? decisions.map((d) => `- ${d}`).join("\n") : "- None"}\n\n`;
+        sessionContent += `## Patterns Noticed\n${args.patterns || "- None"}\n\n`;
+        sessionContent += `## What's Next\n${args.next_steps || "- TBD"}\n`;
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const sessionPath = `10_Sessions/${date}-${timestamp.split("T")[1].slice(0, 8)}.md`;
+        await writeNote(sessionPath, sessionContent);
+
+        // Also append summary to today's daily note
+        const dailySummary = `\n\n---\n### Session Summary (${new Date().toLocaleTimeString()})\n${args.summary}\n${actions.length > 0 ? "\nNew actions:\n" + actions.map((a) => `- [ ] ${a}`).join("\n") : ""}`;
+        try {
+          await updateNote(`07_Daily_Notes/${date}.md`, dailySummary);
+        } catch {
+          // Daily note might not exist yet, create it
+          const dailyContent = renderTemplate("daily-note", { Date: date });
+          await writeNote(`07_Daily_Notes/${date}.md`, dailyContent + dailySummary);
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Session logged to ${sessionPath} and appended to daily note.\nClients: ${clients.join(", ") || "none"}\nActions: ${actions.length}\nDecisions: ${decisions.length}`,
+            },
+          ],
+        };
+      }
+
+      case "get_open_actions": {
+        // Search for unchecked checkboxes across the vault
+        const searchFolder = args.client
+          ? `01_Clients/${args.client}`
+          : "01_Clients";
+        try {
+          const results = await searchNotes("- [ ]");
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Open actions found:\n${JSON.stringify(results, null, 2)}`,
+              },
+            ],
+          };
+        } catch {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Could not search for open actions. Try searching manually with search_notes for '- [ ]'",
+              },
             ],
           };
         }
