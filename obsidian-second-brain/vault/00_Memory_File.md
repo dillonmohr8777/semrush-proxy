@@ -45,6 +45,7 @@
 - Website: https://shadowheatingandcooling.com
 - Industry: HVAC
 - Services: Heating, cooling, installation, repair
+- Work I do: Google Ads + GMB postings
 - Geography: [FILL IN]
 - Google Ads Account ID: [FILL IN]
 - Notes:
@@ -64,8 +65,8 @@
 - Website: https://omegalandscapecorp.com
 - Industry: Landscaping
 - Services: Retaining walls, French drains, hardscaping, lawn care
+- Work I do: GMB postings
 - Geography: Pittsburgh area
-- Google Ads Account ID: [FILL IN]
 - Notes:
 
 ### Jeff Hozias
@@ -102,9 +103,9 @@
 - Website: [FILL IN]
 - Industry: Hardwood flooring
 - Services: Installation, refinishing, repair
+- Work I do: Building Squarespace landing pages
 - Geography: [FILL IN]
-- Google Ads Account ID: [FILL IN]
-- Notes:
+- Notes: NOT on WordPress - uses Squarespace
 
 ### NKCDC
 - Commission: [FILL IN]
