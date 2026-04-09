@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "semrush": {
+      "command": "node",
+      "args": ["./mcp-servers/semrush/index.js"],
+      "env": {
+        "SEMRUSH_API_KEY": "YOUR_SEMRUSH_API_KEY"
+      }
+    },
+    "google-ads": {
+      "command": "node",
+      "args": ["./mcp-servers/google-ads/index.js"],
+      "env": {
+        "GOOGLE_ADS_CLIENT_ID": "YOUR_CLIENT_ID",
+        "GOOGLE_ADS_CLIENT_SECRET": "YOUR_CLIENT_SECRET",
+        "GOOGLE_ADS_DEVELOPER_TOKEN": "YOUR_DEV_TOKEN",
+        "GOOGLE_ADS_REFRESH_TOKEN": "YOUR_REFRESH_TOKEN",
+        "GOOGLE_ADS_LOGIN_CUSTOMER_ID": "YOUR_MCC_ID"
+      }
+    },
+    "wordpress": {
+      "command": "node",
+      "args": ["./mcp-servers/wordpress/index.js"],
+      "env": {
+        "WORDPRESS_SITES": "[{\"name\":\"hardwood-artisan\",\"url\":\"https://hardwoodartisan.com\",\"username\":\"YOUR_USER\",\"app_password\":\"YOUR_APP_PASSWORD\"},{\"name\":\"omega-landscape\",\"url\":\"https://omegalandscape.com\",\"username\":\"YOUR_USER\",\"app_password\":\"YOUR_APP_PASSWORD\"}]"
+      }
+    },
+    "slack": {
+      "command": "node",
+      "args": ["./mcp-servers/slack/index.js"],
+      "env": {
+        "SLACK_BOT_TOKEN": "xoxb-YOUR-BOT-TOKEN",
+        "SLACK_DEFAULT_CHANNEL": "marketing-ops",
+        "SLACK_APPROVAL_CHANNEL": "marketing-approvals"
+      }
+    },
+    "obsidian": {
+      "command": "node",
+      "args": ["./obsidian-second-brain/mcp-server/index.js"],
+      "env": {
+        "OBSIDIAN_API_URL": "https://127.0.0.1:27124",
+        "OBSIDIAN_API_KEY": "YOUR_OBSIDIAN_API_KEY"
+      }
+    }
+  }
+}
