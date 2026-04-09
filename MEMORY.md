@@ -36,3 +36,12 @@
 
 ### Full-time
 - Align HCM
+
+---
+
+## Client Notes
+
+### Bar Crawl USA
+- **Category:** Momentum 360 (Account Manager)
+- **Industry:** Entertainment / Hospitality
+- **Notes:**
