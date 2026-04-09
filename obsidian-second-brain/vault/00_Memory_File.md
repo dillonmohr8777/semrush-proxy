@@ -5,8 +5,9 @@
 
 ## Who I Am
 - Name: Dillon Mohr
-- Role: Marketing operator / agency owner
-- Business: Managing Google Ads, SEO, and landing pages for multiple clients
+- Email: dillonmohr8777@gmail.com
+- Phone: (814) 873-5333
+- Role: Marketing operator + account manager + full-time at Align HCM
 - Style: Direct, execution-focused, results-oriented
 - Communication: Keep it concise. Lead with the action. Skip the fluff.
 
@@ -17,58 +18,224 @@
 - When in doubt: draft it, notify me, and move on to the next thing
 - I review and approve in batches - stack up draft work and send me a summary
 
-## My Business
-- I run paid search (Google Ads) and landing page optimization for local/regional businesses
-- I use Semrush for keyword research and competitive analysis
+## My Business Structure
+- **Align HCM** - Full-time W2 job
+- **Momentum 360** - Agency I account-manage clients through (started January 2026)
+- **1099 / Freelance** - Direct clients I bill independently
+- I run paid search (Google Ads), Meta ads, SEO, landing pages, and content for local/regional businesses
 - WordPress is the primary CMS for client sites
 - I track everything in Obsidian and communicate via Slack
 
-## Active Clients
+---
 
-### Hardwood Artisan
-- Industry: Hardwood flooring
-- Services: Installation, refinishing, repair
-- Geography: [FILL IN]
-- Website: [FILL IN]
-- Google Ads Account ID: [FILL IN]
-- Status: Active
-- Notes:
-
-### Omega Landscape
-- Industry: Landscaping
-- Services: Retaining walls, French drains, hardscaping, lawn care
-- Geography: Pittsburgh area
-- Website: [FILL IN]
-- Google Ads Account ID: [FILL IN]
-- Status: Active
-- Notes:
-
-### NKCDC
-- Industry: Community development
-- Services: [FILL IN]
-- Geography: [FILL IN]
-- Website: [FILL IN]
-- Google Ads Account ID: [FILL IN]
-- Status: Active
-- Notes:
+## MOMENTUM 360 CLIENTS (Account Manager)
 
 ### Bar Crawl USA
+- Commission: $950/mo
+- Website: https://barcrawlusa.com
 - Industry: Events / entertainment
 - Services: Bar crawl events
-- Geography: Chattanooga + other cities
-- Website: [FILL IN]
+- Geography: Chattanooga + expanding to other cities
 - Google Ads Account ID: [FILL IN]
-- Status: Active
 - Notes:
 
-### KJB
+### Shadow HVAC
+- Commission: $250/mo
+- Website: https://shadowheatingandcooling.com
+- Industry: HVAC
+- Services: Heating, cooling, installation, repair
+- Geography: [FILL IN]
+- Google Ads Account ID: [FILL IN]
+- Notes:
+
+### Link Eze
+- Commission: $300/mo
+- Website: https://linkeze.biz
 - Industry: [FILL IN]
 - Services: [FILL IN]
 - Geography: [FILL IN]
+- Google Ads Account ID: [FILL IN]
+- Notes:
+
+### Omega Landscaping
+- Commission: $200/mo
+- Website: https://omegalandscapecorp.com
+- Industry: Landscaping
+- Services: Retaining walls, French drains, hardscaping, lawn care
+- Geography: Pittsburgh area
+- Google Ads Account ID: [FILL IN]
+- Notes:
+
+### Jeff Hozias
+- Commission: $200/mo
+- Website: https://jeffhozias.randrealty.com
+- Industry: Real estate
+- Services: Real estate agent
+- Geography: [FILL IN]
+- Google Ads Account ID: [FILL IN]
+- Notes:
+
+### Kimberly James Bridal Boutique (KJB)
+- Commission: $300/mo
+- Website: https://kimberlyjamesbridal.com
+- Industry: Bridal / wedding
+- Services: Bridal boutique, wedding dresses
+- Geography: [FILL IN]
+- Google Ads Account ID: [FILL IN]
+- Notes:
+
+### Fresh Blends
+- Commission: $500/mo
+- Website: https://freshblends.com
+- Industry: Food / beverage
+- Services: [FILL IN]
+- Geography: [FILL IN]
+- Google Ads Account ID: [FILL IN]
+- Notes:
+
+### Hardwood Artisan
+- Commission: [FILL IN]
+- Website: [FILL IN]
+- Industry: Hardwood flooring
+- Services: Installation, refinishing, repair
+- Geography: [FILL IN]
+- Google Ads Account ID: [FILL IN]
+- Notes:
+
+### NKCDC
+- Commission: [FILL IN]
+- Website: [FILL IN]
+- Industry: Community development
+- Services: [FILL IN]
+- Geography: [FILL IN]
+- Google Ads Account ID: [FILL IN]
+- Notes:
+
+### Onsite Concrete
+- Commission: [FILL IN]
+- Website: [FILL IN]
+- Industry: Concrete / construction
+- Services: [FILL IN]
+- Geography: [FILL IN]
+- Google Ads Account ID: [FILL IN]
+- Notes:
+
+---
+
+## 1099 / FREELANCE CLIENTS
+
+### Bok Law Firm
+- Relationship: 1099
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Notes:
+
+### Buzz Bull
+- Relationship: 1099
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Notes: Has additional clients under it (sub-clients)
+
+---
+
+## DIRECT CLIENTS
+
+### Next Gen Solutions
+- Services provided: Google Ads
 - Website: [FILL IN]
 - Google Ads Account ID: [FILL IN]
-- Status: Active
 - Notes:
+
+### Florecita
+- Services provided: Google Ads, Meta Ads
+- Website: [FILL IN]
+- Google Ads Account ID: [FILL IN]
+- Notes:
+
+### Commercial Cleaners Alliance
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Notes:
+
+### Sally Compton
+- Services provided: Content / SEO (9 blog posts)
+- Website: [FILL IN]
+- Notes: Primarily blog content
+
+### PNW Pro Clean
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Industry: Cleaning services
+- Geography: Pacific Northwest
+- Notes:
+
+### PureClean Carpets
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Industry: Carpet cleaning
+- Notes:
+
+### Ram Air
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Industry: HVAC / air duct cleaning
+- Notes:
+
+### Bluegrass Janitorial / Kentucky Cleaning Solutions
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Industry: Commercial cleaning
+- Geography: Kentucky
+- Notes: Two brand names, same business
+
+### Bridge of Hope OTC
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Industry: Nonprofit
+- Notes:
+
+### Dryer Vent John
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Industry: Dryer vent cleaning
+- Notes:
+
+### Biohazard Remediation
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Industry: Biohazard cleanup
+- Notes:
+
+### Guaranteed Cleaning
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Industry: Cleaning services
+- Notes:
+
+### Bend Plastic Surgery
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Industry: Medical / cosmetic surgery
+- Geography: Bend, OR
+- Notes:
+
+### Bend Oral Surgery
+- Services provided: [FILL IN]
+- Website: [FILL IN]
+- Industry: Medical / oral surgery
+- Geography: Bend, OR
+- Notes:
+
+---
+
+## FULL-TIME
+
+### Align HCM
+- Relationship: W2 full-time
+- Role: [FILL IN]
+- Notes:
+
+---
 
 ## My Processes
 - New client onboarding: Audit Google Ads → Pull Semrush data → Inventory WordPress pages → Identify gaps → Draft improvements → Notify in Slack
@@ -97,7 +264,8 @@
 - Campaign insights → `02_Campaigns/[Campaign Name].md`
 - Content ideas → `03_Content/` using content-idea template
 - New SOPs discovered → `04_SOPs/` using sop template
-- Session summaries → `07_Daily_Notes/[YYYY-MM-DD].md` appended under "## Notes"
+- Session summaries → `10_Sessions/` + append to daily note
 - Audit results → `01_Clients/[Client Name].md` under "## Notes" AND Slack notification
 - Reusable learnings → This file, under "## Patterns and Learnings"
+- Transcripts → `09_Transcripts/` using transcript template
 - Errors/issues → Slack urgent alert + `01_Clients/[Client Name].md` under "## Notes"
