@@ -107,3 +107,16 @@
 ## Client Patterns
 
 - **Bar Crawl USA:** Scales events across 10+ cities simultaneously — needs templated campaign systems, not one-off builds.
+
+---
+
+## System Files
+
+| File | Purpose |
+|------|---------|
+| `MEMORY.md` | Client roster, notes, and patterns |
+| `DILLON_OS.md` | Agent system, queues, SOPs, content engine |
+| `02_Campaigns/` | Campaign prompts and strategy docs |
+| `04_SOPs/` | Reusable playbooks and frameworks |
+| `auth/server.js` | Google OAuth 2.0 integration (Ads + GBP) |
+| `api/proxy.js` | SEMRush API proxy |
