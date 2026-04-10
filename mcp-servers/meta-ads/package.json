@@ -1,0 +1,13 @@
+{
+  "name": "meta-ads-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Meta (Facebook/Instagram) Marketing API - campaigns, ads, creative, pixels, reporting",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
