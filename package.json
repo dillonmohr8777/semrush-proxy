@@ -1,0 +1,15 @@
+{
+  "name": "semrush-proxy",
+  "version": "1.0.0",
+  "description": "SEMRush proxy and Google Ads/GBP integration",
+  "scripts": {
+    "auth": "node auth/server.js",
+    "start": "node auth/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "googleapis": "^144.0.0",
+    "open": "^10.1.0"
+  }
+}
