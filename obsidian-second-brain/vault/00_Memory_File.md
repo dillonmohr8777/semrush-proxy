@@ -62,9 +62,9 @@
 
 ### Omega Landscaping
 - Commission: $200/mo
-- Website: https://omegalandscapecorp.com
+- Website: https://www.omegalandscapingandconcrete.com
 - Industry: Landscaping
-- Services: Retaining walls, French drains, hardscaping, lawn care
+- Services: Retaining walls, French drains, hardscaping, lawn care, concrete work
 - Work I do: GMB postings
 - Geography: Pittsburgh area
 - Notes:
