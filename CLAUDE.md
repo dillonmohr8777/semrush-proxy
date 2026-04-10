@@ -113,17 +113,18 @@ When I dump raw meeting notes or a transcript:
 ```
 00_Memory_File.md  → Master context (read every session)
 00_Inbox/          → Raw dumps, unprocessed notes
-01_Clients/        → Client profiles
+01_Clients/        → Client profiles + per-client Agent Memory + Reporting Log
 01_Clients/Meetings/ → Meeting notes
-02_Campaigns/      → Campaign tracking
-03_Content/        → Content ideas and drafts
+02_Campaigns/      → Campaign tracking + optimization/build queues
+03_Content/        → Content ideas, blog opportunities, SEO keyword targets
 04_SOPs/           → Standard operating procedures
 05_Offers/         → Service offers and pricing
 06_Personal/       → Personal notes
 07_Daily_Notes/    → Daily journals
 08_Assets/         → Reference materials
 09_Transcripts/    → Processed call transcripts
-10_Sessions/       → Session logs (auto-generated)
+10_Sessions/       → Session logs + Agent Runs + API Notes
+11_Agents/         → Agent brains (Master, Google Ads, SEO, Web, Reporting)
 _templates/        → Note templates
 ```
 
