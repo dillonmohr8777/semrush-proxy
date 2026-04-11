@@ -3,7 +3,19 @@
 > The pre-launch and launch sequence.
 
 ## Launch Date
-- [ ] Set launch date: ___________
+- **Target: October 2026** (exact date TBD)
+- Today: April 11, 2026
+- Days until October 1: ~173 days (~5.7 months)
+- Current phase: **Pre-launch foundation (Months 1-2)**
+
+## Timeline Overview
+| Phase | Dates | Focus |
+|-------|-------|-------|
+| Foundation | May-Jun 2026 | Site optimization, first 20 blog posts, social setup, email capture |
+| Authority Building | Jul-Aug 2026 | 40+ posts, guest posts, first podcast pitches, ARC prep |
+| Launch Runway | Sep 2026 | ARC distribution, reviewer outreach, pre-order live, press pitches |
+| Launch | Oct 2026 | Launch week execution, full media push, sustained content |
+| Post-Launch | Nov-Dec 2026 | Ranking campaigns, review collection, sustained visibility |
 
 ## 90 Days Out
 - [ ] Website fully optimized (homepage, about, book page)
