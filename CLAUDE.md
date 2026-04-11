@@ -7,6 +7,40 @@ You are connected to my marketing stack through MCP servers:
 - **Slack** - notifications, reports, approval requests, urgent alerts
 - **Obsidian** - memory, client notes, meeting notes, SOPs, campaign logs
 
+## TWO SYSTEMS - NEVER MIX
+
+You operate two completely separate marketing systems. They share the same MCP infrastructure but never cross-contaminate data.
+
+### System 1: Client Marketing
+- **Vault:** `obsidian-second-brain/vault/`
+- **Memory:** `00_Memory_File.md` (read at session start for client work)
+- **Skills:** `audit-client`, `review-search-terms`, `find-keyword-gaps`, `build-landing-page`, `weekly-review`, `process-transcript`, `onboard-client`, `daily-summary`
+- **WordPress targets:** Client sites (Hardwood Artisan, Omega Landscape, etc.)
+- **Google Ads targets:** Client account IDs from Memory File
+- **Slack channels:** `marketing-ops`, `marketing-approvals`
+- **When active:** Any task mentioning a client name, campaign, or account
+
+### System 2: Book Marketing - The Ironic Ineptocracy
+- **Vault:** `ironic-ineptocracy-vault/`
+- **Operating Rules:** `00-Command-Center/Operating Rules.md` (read at session start for book work)
+- **Dashboard:** `00-Command-Center/Dashboard.md`
+- **Skills:** `book-seo-audit`, `book-blog-draft`, `book-content-repurpose`, `book-site-audit`, `book-launch-ops`, `book-keyword-research`
+- **WordPress target:** ironicineptocracy.com
+- **Semrush target:** ironicineptocracy.com domain
+- **Slack channels:** `book-marketing`, `book-approvals`, `book-alerts`
+- **When active:** Any task mentioning the book, the novel, author brand, or book marketing
+- **Canon protection:** Always cross-reference `01-Story-Core/` and `03-Plot-and-World/Public Spoiler Rules.md` before creating public-facing book content
+- **Brand protection:** Always check `04-Brand/Brand Guardrails.md` and `04-Brand/Voice and Tone.md`
+
+### Rules
+- Never write client data into the book vault or vice versa
+- Never reference client accounts, campaigns, or notes when doing book work
+- Never reference book content, characters, or themes when doing client work
+- The Semrush MCP server is shared - use it for whichever system is active (different domains)
+- The WordPress MCP server is shared - target the correct site for the active system
+- The Slack MCP server is shared - use the correct channels for the active system
+- If a task is ambiguous, ask which system it belongs to
+
 ## MEMORY-FIRST BEHAVIOR (CRITICAL)
 
 **Before doing ANYTHING, read the Memory File from Obsidian (`read_memory_file`).**
@@ -130,6 +164,7 @@ _templates/        → Note templates
 
 Skills live in the `/skills` directory. Each skill is a workflow that loads ONLY when needed, keeping the context window lean. Available skills:
 
+### Client Skills
 - **audit-client** - Full client audit across Google Ads + Semrush + WordPress
 - **build-landing-page** - Draft a conversion-focused landing page from keyword/ad data
 - **review-search-terms** - Analyze search terms for waste and opportunities
@@ -138,6 +173,14 @@ Skills live in the `/skills` directory. Each skill is a workflow that loads ONLY
 - **process-transcript** - Structure raw meeting notes into actionable output
 - **onboard-client** - New client setup and initial audit
 - **daily-summary** - Morning briefing across all clients
+
+### Book Skills (The Ironic Ineptocracy)
+- **book-seo-audit** - Full SEO audit of ironicineptocracy.com
+- **book-blog-draft** - End-to-end blog post pipeline with canon/brand checks
+- **book-content-repurpose** - Turn one approved blog into multi-channel content
+- **book-site-audit** - Website content quality and conversion review
+- **book-launch-ops** - Launch countdown management and readiness checks
+- **book-keyword-research** - Keyword universe expansion and gap analysis
 
 When a task matches a skill, read the skill file first then follow it.
 
