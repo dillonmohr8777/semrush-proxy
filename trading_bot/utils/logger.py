@@ -4,7 +4,7 @@ Logging system: CSV trade logs, equity curve, JSON state, text events.
 import csv
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from dataclasses import asdict
 
@@ -65,7 +65,7 @@ class Logger:
             json.dump(state, f, indent=2, default=str)
 
     def event(self, message: str, level: str = "INFO"):
-        ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         line = f"[{ts}] [{level}] {message}\n"
         with open(self.event_path, "a") as f:
             f.write(line)

@@ -21,7 +21,7 @@ SAFETY LAYERS:
 """
 import uuid
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict
 
 from utils.types import (
@@ -47,7 +47,7 @@ class SafetyGate:
 
         self.orders_today = 0
         self.total_orders_ever = 0
-        self.day_marker = datetime.utcnow().date()
+        self.day_marker = datetime.now(timezone.utc).date()
         self.enabled = True
 
     def check(self, signal: Signal, available_balance: float,
@@ -55,7 +55,7 @@ class SafetyGate:
         if not self.enabled:
             return False, "SAFETY GATE: Trading disabled by kill switch"
 
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         if today != self.day_marker:
             self.orders_today = 0
             self.day_marker = today
@@ -262,7 +262,7 @@ class LiveEngine:
             stop_loss=signal.stop_loss,
             take_profit=signal.take_profit,
             liquidation_price=signal.liquidation_price,
-            opened_at=datetime.utcnow(),
+            opened_at=datetime.now(timezone.utc),
             highest_price=signal.entry_price,
             lowest_price=signal.entry_price,
             original_quantity=actual_qty,
@@ -383,7 +383,7 @@ class LiveEngine:
             quantity=pos.quantity, notional=pos.notional,
             fees=total_fees, pnl=net_pnl, pnl_pct=pnl_pct,
             opened_at=pos.opened_at.isoformat(),
-            closed_at=datetime.utcnow().isoformat(),
+            closed_at=datetime.now(timezone.utc).isoformat(),
             candles_held=pos.candles_held,
             entry_reason=pos.signal_reason,
             exit_reason=exit_reason.value,
@@ -406,7 +406,7 @@ class LiveEngine:
         self.risk_mgr.update_equity(self.risk_mgr.cash, unrealized, margin_locked)
 
         return EquitySnapshot(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             equity=self.risk_mgr.equity,
             cash=self.risk_mgr.cash,
             unrealized_pnl=unrealized,

@@ -19,7 +19,7 @@ import time
 import signal
 import argparse
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Optional
 
 # Add parent to path
@@ -168,7 +168,7 @@ class TradingBot:
 
             for tf_name, tf_seconds in self.config.data.timeframes.items():
                 # Generate historical candles going back in time
-                start_time = datetime.utcnow() - timedelta(seconds=tf_seconds * num_candles)
+                start_time = datetime.now(timezone.utc) - timedelta(seconds=tf_seconds * num_candles)
 
                 price = base_price
                 for i in range(num_candles):
@@ -207,7 +207,7 @@ class TradingBot:
     def _run_cycle(self, is_warmup: bool, cycle: int, warmup_total: int):
         """Execute one analysis/trading cycle."""
         self.cycle_count += 1
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         ts = now.strftime("%H:%M:%S")
 
         # Fetch prices
@@ -390,7 +390,7 @@ class TradingBot:
     def _save_state(self, prices, signals, eq):
         """Save current state to JSON."""
         state = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "mode": "PAPER",
             "cycle": self.cycle_count,
             "equity": eq.equity,

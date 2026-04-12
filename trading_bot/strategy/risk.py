@@ -2,7 +2,7 @@
 Risk management: position sizing, exposure limits, drawdown guards, kill switches.
 This is the most critical module. Every trade must pass through here.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict
 from utils.types import Position, Side, TradeLog
 from config import RiskConfig, LeverageConfig
@@ -27,8 +27,8 @@ class RiskManager:
         self.total_losses = 0
         self.kill_switch_active = False
 
-        self._day_marker = datetime.utcnow().date()
-        self._week_marker = datetime.utcnow().isocalendar()[1]
+        self._day_marker = datetime.now(timezone.utc).date()
+        self._week_marker = datetime.now(timezone.utc).isocalendar()[1]
 
     def update_equity(self, cash: float, unrealized_pnl: float,
                       margin_in_positions: float = 0.0):
@@ -41,7 +41,7 @@ class RiskManager:
             self.peak_equity = self.equity
 
         # Day/week rollover
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if now.date() != self._day_marker:
             self._day_marker = now.date()
             self.daily_pnl = 0.0
@@ -92,7 +92,7 @@ class RiskManager:
             return False, f"Max concurrent positions ({self.config.max_concurrent_positions}) reached"
 
         # Cooldown after stop loss
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if self.last_loss_time:
             cooldown = timedelta(seconds=self.config.cooldown_after_stop_seconds)
             if now - self.last_loss_time < cooldown:
@@ -196,7 +196,7 @@ class RiskManager:
         else:
             self.total_losses += 1
             self.consecutive_losses += 1
-            self.last_loss_time = datetime.utcnow()
+            self.last_loss_time = datetime.now(timezone.utc)
 
     @property
     def win_rate(self) -> float:
