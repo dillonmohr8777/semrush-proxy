@@ -31,6 +31,7 @@ from utils.types import (
     Position, Regime, Candle
 )
 from utils.logger import Logger
+from utils.notifier import Notifier
 from data.market_data_client import MarketDataClient, CandleBuilder
 from strategy.indicators import compute_indicators
 from strategy.signal_engine import SignalEngine
@@ -71,6 +72,28 @@ class TradingBot:
 
         self.candle_builder = CandleBuilder(max_candles=config.data.max_candles)
 
+        # Push notifier (ntfy.sh). Topic can come from .env (NTFY_TOPIC)
+        # or from config. .env takes precedence if set.
+        ntfy_topic = os.environ.get("NTFY_TOPIC", "").strip() or config.notify.ntfy_topic
+        self.notifier = Notifier(
+            topic=ntfy_topic,
+            profit_threshold_usd=config.notify.profit_threshold_usd,
+            profit_threshold_pct=config.notify.profit_threshold_pct,
+            enabled=config.notify.enabled,
+            server=config.notify.server,
+            logger=self.logger,
+        )
+        if self.notifier.enabled:
+            self.logger.event(
+                f"Push notifications ENABLED -> topic '{ntfy_topic}' "
+                f"(profit threshold ${config.notify.profit_threshold_usd:.0f} "
+                f"or {config.notify.profit_threshold_pct:.1f}%)"
+            )
+        else:
+            self.logger.event(
+                "Push notifications DISABLED (set NTFY_TOPIC env var to enable)"
+            )
+
         self.risk_manager = RiskManager(config.risk, config.leverage)
         self.trade_manager = TradeManager(config.strategy)
         self.signal_engine = SignalEngine(
@@ -97,12 +120,14 @@ class TradingBot:
                 safety=self.safety,
                 futures_config=config.futures,
                 fee_pct=config.risk.taker_fee_pct,
+                notifier=self.notifier,
             )
         else:
             # PAPER MODE: simulated execution
             self.engine = PaperEngine(
                 self.risk_manager, self.trade_manager,
                 self.logger, fee_pct=config.risk.taker_fee_pct,
+                notifier=self.notifier,
             )
 
         self.drawdown_tracker = DrawdownTracker(config.risk.starting_balance)

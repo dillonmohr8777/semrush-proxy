@@ -17,11 +17,12 @@ from utils.logger import Logger
 
 class PaperEngine:
     def __init__(self, risk_manager: RiskManager, trade_manager: TradeManager,
-                 logger: Logger, fee_pct: float = 0.06):
+                 logger: Logger, fee_pct: float = 0.06, notifier=None):
         self.risk_mgr = risk_manager
         self.trade_mgr = trade_manager
         self.logger = logger
         self.fee_pct = fee_pct
+        self.notifier = notifier
 
         self.positions: List[Position] = []
         self.closed_trades: List[TradeLog] = []
@@ -180,6 +181,27 @@ class PaperEngine:
             f"Exit=${exit_price:.2f} | PnL=${net_pnl:.2f} ({pnl_pct:.1f}%) | "
             f"Reason={exit_reason.value} | Held={pos.candles_held} candles"
         )
+
+        # Push notification on profitable exits (and large losses)
+        if self.notifier:
+            if is_win:
+                self.notifier.notify_profit(
+                    symbol=pos.symbol,
+                    side=pos.side.value,
+                    pnl_usd=net_pnl,
+                    pnl_pct=pnl_pct,
+                    entry=pos.entry_price,
+                    exit_price=exit_price,
+                    leverage=pos.leverage,
+                    reason=exit_reason.value,
+                )
+            else:
+                self.notifier.notify_loss(
+                    symbol=pos.symbol,
+                    side=pos.side.value,
+                    pnl_usd=net_pnl,
+                    pnl_pct=pnl_pct,
+                )
 
         return trade
 

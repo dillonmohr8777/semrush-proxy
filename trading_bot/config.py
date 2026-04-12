@@ -203,6 +203,28 @@ class LogConfig:
 
 
 @dataclass
+class NotifyConfig:
+    """Push notifications via ntfy.sh (free, no signup).
+
+    To enable:
+      1. Install the "ntfy" app on your phone
+      2. Subscribe to a unique topic name (e.g. "dillon-trading-xyz123")
+      3. Set NTFY_TOPIC in your .env file to the same topic name
+    """
+    enabled: bool = True
+    # Topic is pulled from env var NTFY_TOPIC at runtime if empty here
+    ntfy_topic: str = ""
+    server: str = "https://ntfy.sh"
+
+    # Only fire on profit above these thresholds (either triggers it)
+    profit_threshold_usd: float = 20.0    # $20+ profit
+    profit_threshold_pct: float = 2.0     # OR 2%+ gain on margin
+
+    # Also notify on big losses (>= 2x profit_threshold_usd)
+    notify_losses: bool = True
+
+
+@dataclass
 class BotConfig:
     risk: RiskConfig = field(default_factory=RiskConfig)
     leverage: LeverageConfig = field(default_factory=LeverageConfig)
@@ -210,6 +232,7 @@ class BotConfig:
     data: DataConfig = field(default_factory=DataConfig)
     futures: FuturesConfig = field(default_factory=FuturesConfig)
     log: LogConfig = field(default_factory=LogConfig)
+    notify: NotifyConfig = field(default_factory=NotifyConfig)
 
     # Master safety
     paper_mode: bool = True  # NEVER set to False without explicit safety checks
