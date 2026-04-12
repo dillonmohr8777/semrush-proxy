@@ -127,14 +127,17 @@ class RiskManager:
 
     def calculate_position_size(self, equity: float, entry_price: float,
                                 stop_loss: float, leverage: float,
-                                side: Side) -> tuple:
+                                side: Side,
+                                contract_size: float = 0.0) -> tuple:
         """
         Size position based on:
         - Risk per trade (% of equity)
         - Stop distance
         - Leverage
+        - Contract size (for futures)
 
-        Returns (position_size_usd, quantity, margin_required).
+        Returns (notional, quantity, margin, contracts).
+        contracts = 0 for spot, >= 1 for futures.
         """
         # Risk amount in USD
         risk_usd = equity * (self.config.risk_per_trade_pct / 100.0)
@@ -146,7 +149,7 @@ class RiskManager:
             stop_distance = (stop_loss - entry_price) / entry_price
 
         if stop_distance <= 0:
-            return 0, 0, 0
+            return 0, 0, 0, 0
 
         # Position size: risk / (stop_distance) — this is the notional
         # With leverage, the margin = notional / leverage
@@ -171,7 +174,16 @@ class RiskManager:
         quantity = notional / entry_price
         margin = notional / leverage
 
-        return notional, quantity, margin
+        # Convert to contracts for futures
+        contracts = 0
+        if contract_size > 0:
+            contracts = max(1, int(quantity / contract_size))
+            # Snap quantity and notional to whole contracts
+            quantity = contracts * contract_size
+            notional = quantity * entry_price
+            margin = notional / leverage
+
+        return notional, quantity, margin, contracts
 
     def record_trade_result(self, pnl: float, is_win: bool):
         """Update risk state after a trade closes."""

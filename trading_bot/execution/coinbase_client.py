@@ -1,15 +1,17 @@
 """
 Coinbase Advanced Trade API client.
-Handles JWT authentication and all exchange interactions.
+Handles authentication and all exchange interactions for BOTH spot and futures.
 
 Supports:
 - Account balance queries
-- Market/limit order placement
-- Order status and cancellation
+- Spot market/limit orders
+- Futures/perpetual contract orders (BUY and SELL for real longs + shorts)
+- Leverage and margin configuration
 - Historical candle data
+- Futures position listing
 - Real-time ticker prices
 
-Authentication uses Coinbase CDP API keys with ES256 JWT signing.
+Authentication uses Coinbase API key + secret with HMAC-SHA256 signing.
 API keys are loaded from environment variables — NEVER hardcoded.
 """
 import os
@@ -18,6 +20,7 @@ import json
 import uuid
 import hmac
 import hashlib
+import math
 import urllib.request
 import urllib.error
 import urllib.parse
@@ -28,22 +31,17 @@ from utils.types import Candle, Side
 from utils.retry import retry
 
 
-# Coinbase Advanced Trade API base
 ADVANCED_TRADE_BASE = "https://api.coinbase.com/api/v3/brokerage"
 COINBASE_V2_BASE = "https://api.coinbase.com/v2"
 
 
 class CoinbaseAuth:
-    """
-    Handles Coinbase Advanced Trade API authentication.
-    Uses API key + secret with HMAC-SHA256 signing.
-    """
+    """HMAC-SHA256 authentication for Coinbase Advanced Trade API."""
     def __init__(self, api_key: str, api_secret: str):
         self.api_key = api_key
         self.api_secret = api_secret
 
     def sign_request(self, method: str, path: str, body: str = "") -> Dict[str, str]:
-        """Generate authentication headers for a request."""
         timestamp = str(int(time.time()))
         message = timestamp + method.upper() + path + body
         signature = hmac.new(
@@ -63,15 +61,14 @@ class CoinbaseAuth:
 
 class CoinbaseClient:
     """
-    Coinbase Advanced Trade API client.
-    All methods that touch real money are clearly marked and gated.
+    Coinbase Advanced Trade API client for spot AND futures.
+    All methods that touch real money are clearly documented.
     """
     def __init__(self, api_key: str = "", api_secret: str = "",
-                 sandbox: bool = False, timeout: int = 10):
+                 timeout: int = 10):
         self.api_key = api_key or os.environ.get("COINBASE_API_KEY", "")
         self.api_secret = api_secret or os.environ.get("COINBASE_API_SECRET", "")
         self.timeout = timeout
-        self.sandbox = sandbox
         self.authenticated = bool(self.api_key and self.api_secret)
 
         if self.authenticated:
@@ -86,7 +83,9 @@ class CoinbaseClient:
                 "Set COINBASE_API_KEY and COINBASE_API_SECRET environment variables."
             )
 
-    # ─── Public endpoints (no auth needed) ───────────────────────
+    # ═══════════════════════════════════════════════════════════════
+    #  PUBLIC ENDPOINTS (no auth needed)
+    # ═══════════════════════════════════════════════════════════════
 
     @retry(max_attempts=3, base_delay=2.0)
     def get_spot_price(self, symbol: str) -> float:
@@ -96,22 +95,7 @@ class CoinbaseClient:
         data = self._get_public(url)
         return float(data["data"]["amount"])
 
-    @retry(max_attempts=3, base_delay=2.0)
-    def get_buy_price(self, symbol: str) -> float:
-        coin = symbol.split("-")[0]
-        url = f"{COINBASE_V2_BASE}/prices/{coin}-USD/buy"
-        data = self._get_public(url)
-        return float(data["data"]["amount"])
-
-    @retry(max_attempts=3, base_delay=2.0)
-    def get_sell_price(self, symbol: str) -> float:
-        coin = symbol.split("-")[0]
-        url = f"{COINBASE_V2_BASE}/prices/{coin}-USD/sell"
-        data = self._get_public(url)
-        return float(data["data"]["amount"])
-
     def get_prices(self, symbols: List[str]) -> Dict[str, float]:
-        """Get spot prices for multiple symbols."""
         prices = {}
         for s in symbols:
             try:
@@ -123,12 +107,7 @@ class CoinbaseClient:
     @retry(max_attempts=3, base_delay=2.0)
     def get_candles(self, product_id: str, granularity: str = "ONE_MINUTE",
                     limit: int = 300) -> List[Candle]:
-        """
-        Fetch historical candles from Coinbase Advanced Trade API.
-
-        product_id: e.g. "BTC-USD"
-        granularity: ONE_MINUTE, FIVE_MINUTE, FIFTEEN_MINUTE, ONE_HOUR, etc.
-        """
+        """Fetch historical candles. Works for both spot and futures product IDs."""
         end = int(time.time())
         gran_seconds = {
             "ONE_MINUTE": 60, "FIVE_MINUTE": 300,
@@ -152,28 +131,34 @@ class CoinbaseClient:
                 close=float(c["close"]),
                 volume=float(c["volume"]),
             ))
-
-        # Coinbase returns newest first, reverse to chronological
         candles.reverse()
         return candles
 
     @retry(max_attempts=3, base_delay=2.0)
-    def get_product_ticker(self, product_id: str) -> dict:
-        """Get current ticker for a product."""
-        url = f"{ADVANCED_TRADE_BASE}/products/{product_id}/ticker?limit=1"
+    def list_products(self, product_type: str = None) -> List[dict]:
+        """List available products. Filter by type: SPOT, FUTURE."""
+        url = f"{ADVANCED_TRADE_BASE}/products"
+        if product_type:
+            url += f"?product_type={product_type}"
+        return self._get_public(url).get("products", [])
+
+    @retry(max_attempts=3, base_delay=2.0)
+    def get_product(self, product_id: str) -> dict:
+        """Get details for a specific product."""
+        url = f"{ADVANCED_TRADE_BASE}/products/{product_id}"
         return self._get_public(url)
 
-    # ─── Authenticated endpoints (REAL MONEY) ────────────────────
+    # ═══════════════════════════════════════════════════════════════
+    #  ACCOUNT / BALANCE ENDPOINTS (requires auth)
+    # ═══════════════════════════════════════════════════════════════
 
     @retry(max_attempts=2, base_delay=2.0)
     def get_accounts(self) -> List[dict]:
-        """Get all trading accounts. REQUIRES AUTH."""
         self._check_auth()
         path = "/api/v3/brokerage/accounts"
         return self._get_authenticated(path).get("accounts", [])
 
     def get_balance(self, currency: str = "USD") -> float:
-        """Get balance for a specific currency. REQUIRES AUTH."""
         accounts = self.get_accounts()
         for acc in accounts:
             if acc.get("currency") == currency:
@@ -181,7 +166,6 @@ class CoinbaseClient:
         return 0.0
 
     def get_all_balances(self) -> Dict[str, float]:
-        """Get all non-zero balances. REQUIRES AUTH."""
         accounts = self.get_accounts()
         balances = {}
         for acc in accounts:
@@ -191,19 +175,156 @@ class CoinbaseClient:
         return balances
 
     @retry(max_attempts=2, base_delay=2.0)
-    def place_market_order(self, product_id: str, side: str,
-                           quote_size: str = None,
-                           base_size: str = None) -> dict:
+    def get_futures_balance(self) -> dict:
         """
-        Place a market order. THIS TRADES REAL MONEY.
+        Get futures/perps portfolio balance summary. REQUIRES AUTH.
+        Returns dict with keys like:
+          futures_buying_power, total_usd_balance, cbi_usd_balance,
+          cfm_usd_balance, total_open_orders_hold_amount,
+          unrealized_pnl, daily_realized_pnl, initial_margin,
+          available_margin, liquidation_threshold, etc.
+        """
+        self._check_auth()
+        path = "/api/v3/brokerage/cfm/balance_summary"
+        return self._get_authenticated(path)
 
-        product_id: e.g. "BTC-USD"
-        side: "BUY" or "SELL"
-        quote_size: USD amount to spend (for buys)
-        base_size: asset amount to sell (for sells)
+    def get_futures_buying_power(self) -> float:
+        """Get available futures buying power in USD."""
+        bal = self.get_futures_balance()
+        return float(bal.get("futures_buying_power", 0))
+
+    def get_futures_available_margin(self) -> float:
+        """Get available margin for new positions."""
+        bal = self.get_futures_balance()
+        return float(bal.get("available_margin", 0))
+
+    @retry(max_attempts=2, base_delay=2.0)
+    def get_futures_positions(self) -> List[dict]:
+        """
+        List all open futures positions. REQUIRES AUTH.
+        Each position includes:
+          product_id, number_of_contracts, avg_entry_price,
+          unrealized_pnl, side, current_price, etc.
+        """
+        self._check_auth()
+        path = "/api/v3/brokerage/cfm/positions"
+        return self._get_authenticated(path).get("positions", [])
+
+    # ═══════════════════════════════════════════════════════════════
+    #  FUTURES ORDER ENDPOINTS — REAL MONEY
+    # ═══════════════════════════════════════════════════════════════
+
+    @retry(max_attempts=2, base_delay=2.0)
+    def place_futures_market_order(self, product_id: str, side: str,
+                                   contracts: int,
+                                   leverage: str = "") -> dict:
+        """
+        Place a MARKET order on a futures product.
+        THIS TRADES REAL MONEY.
+
+        product_id: e.g. "BIT-26DEC25-CDE" (US CFM) or "BTC-PERP-INTX" (INTX)
+        side: "BUY" (long) or "SELL" (short/close)
+        contracts: number of contracts (integer)
+        leverage: string (e.g. "2", "5", "10") — empty string uses account default
         """
         self._check_auth()
 
+        body = {
+            "client_order_id": str(uuid.uuid4()),
+            "product_id": product_id,
+            "side": side.upper(),
+            "order_configuration": {
+                "market_market_ioc": {
+                    "base_size": str(contracts),
+                }
+            },
+            "leverage": str(leverage) if leverage else "",
+            "margin_type": "CROSS",
+        }
+
+        path = "/api/v3/brokerage/orders"
+        return self._post_authenticated(path, body)
+
+    @retry(max_attempts=2, base_delay=2.0)
+    def place_futures_limit_order(self, product_id: str, side: str,
+                                   contracts: int, limit_price: float,
+                                   leverage: str = "",
+                                   post_only: bool = True) -> dict:
+        """
+        Place a LIMIT order on a futures product.
+        THIS TRADES REAL MONEY.
+
+        post_only=True ensures maker fee (lower cost).
+        leverage: string (e.g. "2", "5") — empty uses account default.
+        """
+        self._check_auth()
+
+        body = {
+            "client_order_id": str(uuid.uuid4()),
+            "product_id": product_id,
+            "side": side.upper(),
+            "order_configuration": {
+                "limit_limit_gtc": {
+                    "base_size": str(contracts),
+                    "limit_price": str(round(limit_price, 2)),
+                    "post_only": post_only,
+                }
+            },
+            "leverage": str(leverage) if leverage else "",
+            "margin_type": "CROSS",
+        }
+
+        path = "/api/v3/brokerage/orders"
+        return self._post_authenticated(path, body)
+
+    @retry(max_attempts=2, base_delay=2.0)
+    def place_futures_stop_order(self, product_id: str, side: str,
+                                  contracts: int, stop_price: float,
+                                  limit_price: float = None,
+                                  leverage: str = "") -> dict:
+        """
+        Place a stop-limit order on a futures product.
+        Used for stop losses and take profits.
+        THIS TRADES REAL MONEY.
+        """
+        self._check_auth()
+
+        if limit_price is None:
+            # Stop-market: set limit far from stop to ensure fill
+            if side.upper() == "SELL":
+                limit_price = stop_price * 0.99
+            else:
+                limit_price = stop_price * 1.01
+
+        body = {
+            "client_order_id": str(uuid.uuid4()),
+            "product_id": product_id,
+            "side": side.upper(),
+            "order_configuration": {
+                "stop_limit_stop_limit_gtc": {
+                    "base_size": str(contracts),
+                    "limit_price": str(round(limit_price, 2)),
+                    "stop_price": str(round(stop_price, 2)),
+                    "stop_direction": "STOP_DIRECTION_STOP_DOWN" if side.upper() == "SELL" else "STOP_DIRECTION_STOP_UP",
+                }
+            },
+            "leverage": str(leverage) if leverage else "",
+            "margin_type": "CROSS",
+        }
+
+        path = "/api/v3/brokerage/orders"
+        return self._post_authenticated(path, body)
+
+    # ═══════════════════════════════════════════════════════════════
+    #  SPOT ORDER ENDPOINTS — REAL MONEY
+    # ═══════════════════════════════════════════════════════════════
+
+    @retry(max_attempts=2, base_delay=2.0)
+    def place_market_order(self, product_id: str, side: str,
+                           quote_size: str = None,
+                           base_size: str = None) -> dict:
+        """Place a spot market order. THIS TRADES REAL MONEY."""
+        self._check_auth()
         order_config = {"market_market_ioc": {}}
         if quote_size:
             order_config["market_market_ioc"]["quote_size"] = str(quote_size)
@@ -218,42 +339,15 @@ class CoinbaseClient:
             "side": side.upper(),
             "order_configuration": order_config,
         }
-
         path = "/api/v3/brokerage/orders"
         return self._post_authenticated(path, body)
 
-    @retry(max_attempts=2, base_delay=2.0)
-    def place_limit_order(self, product_id: str, side: str,
-                          base_size: str, limit_price: str,
-                          post_only: bool = True) -> dict:
-        """
-        Place a limit order. THIS TRADES REAL MONEY.
-
-        post_only=True ensures maker fees (lower cost).
-        """
-        self._check_auth()
-
-        order_config = {
-            "limit_limit_gtc": {
-                "base_size": str(base_size),
-                "limit_price": str(limit_price),
-                "post_only": post_only,
-            }
-        }
-
-        body = {
-            "client_order_id": str(uuid.uuid4()),
-            "product_id": product_id,
-            "side": side.upper(),
-            "order_configuration": order_config,
-        }
-
-        path = "/api/v3/brokerage/orders"
-        return self._post_authenticated(path, body)
+    # ═══════════════════════════════════════════════════════════════
+    #  ORDER MANAGEMENT
+    # ═══════════════════════════════════════════════════════════════
 
     @retry(max_attempts=2, base_delay=2.0)
     def cancel_orders(self, order_ids: List[str]) -> dict:
-        """Cancel one or more orders. REQUIRES AUTH."""
         self._check_auth()
         body = {"order_ids": order_ids}
         path = "/api/v3/brokerage/orders/batch_cancel"
@@ -261,14 +355,12 @@ class CoinbaseClient:
 
     @retry(max_attempts=2, base_delay=2.0)
     def get_order(self, order_id: str) -> dict:
-        """Get order status. REQUIRES AUTH."""
         self._check_auth()
         path = f"/api/v3/brokerage/orders/historical/{order_id}"
         return self._get_authenticated(path)
 
     @retry(max_attempts=2, base_delay=2.0)
     def list_open_orders(self, product_id: str = None) -> List[dict]:
-        """List open orders. REQUIRES AUTH."""
         self._check_auth()
         path = "/api/v3/brokerage/orders/historical/batch"
         params = {"order_status": "OPEN"}
@@ -277,7 +369,44 @@ class CoinbaseClient:
         query = urllib.parse.urlencode(params)
         return self._get_authenticated(f"{path}?{query}").get("orders", [])
 
-    # ─── Internal HTTP methods ───────────────────────────────────
+    @retry(max_attempts=2, base_delay=2.0)
+    def close_futures_position(self, product_id: str, size: int = None) -> dict:
+        """
+        Close a futures position using the dedicated close_position endpoint.
+        THIS TRADES REAL MONEY.
+
+        Uses POST /api/v3/brokerage/orders/close_position which automatically
+        determines the correct side (opposite of current position).
+
+        product_id: e.g. "BIT-26DEC25-CDE"
+        size: number of contracts to close (None = close all)
+        """
+        self._check_auth()
+
+        body = {
+            "client_order_id": str(uuid.uuid4()),
+            "product_id": product_id,
+        }
+        if size is not None:
+            body["size"] = str(size)
+
+        path = "/api/v3/brokerage/orders/close_position"
+        return self._post_authenticated(path, body)
+
+    @retry(max_attempts=2, base_delay=2.0)
+    def close_futures_position_via_order(self, product_id: str, side: str,
+                                         contracts: int) -> dict:
+        """
+        Fallback: close a futures position by placing an opposite-side market order.
+        Used when the close_position endpoint isn't available.
+        THIS TRADES REAL MONEY.
+        """
+        close_side = "SELL" if side.upper() == "BUY" else "BUY"
+        return self.place_futures_market_order(product_id, close_side, contracts)
+
+    # ═══════════════════════════════════════════════════════════════
+    #  INTERNAL HTTP
+    # ═══════════════════════════════════════════════════════════════
 
     def _get_public(self, url: str) -> dict:
         req = urllib.request.Request(url, headers={"User-Agent": "TradingBot/2.0"})
@@ -302,25 +431,33 @@ class CoinbaseClient:
         with urllib.request.urlopen(req, timeout=self.timeout) as resp:
             return json.loads(resp.read().decode())
 
-    # ─── Connection test ─────────────────────────────────────────
+    # ═══════════════════════════════════════════════════════════════
+    #  CONNECTION TEST
+    # ═══════════════════════════════════════════════════════════════
 
     def test_connection(self) -> Tuple[bool, str]:
         """Test API connectivity. Returns (success, message)."""
-        # Test public endpoint
         try:
             price = self.get_spot_price("BTC-USD")
             public_ok = True
         except Exception as e:
             return False, f"Public API failed: {e}"
 
-        # Test authenticated endpoint if keys provided
         if self.authenticated:
             try:
                 accounts = self.get_accounts()
-                usd_bal = self.get_balance("USD")
+                usd_bal = self.get_balance("USDC")
+                # Try futures balance
+                futures_info = ""
+                try:
+                    fb = self.get_futures_balance()
+                    futures_info = f" | Futures portfolio available"
+                except Exception:
+                    futures_info = " | Futures portfolio: not accessible"
+
                 return True, (f"Connected. BTC=${price:,.2f} | "
-                              f"USD balance: ${usd_bal:,.2f} | "
-                              f"Accounts: {len(accounts)}")
+                              f"USDC balance: ${usd_bal:,.2f} | "
+                              f"Accounts: {len(accounts)}{futures_info}")
             except Exception as e:
                 return False, f"Auth failed: {e}. Check API keys."
 

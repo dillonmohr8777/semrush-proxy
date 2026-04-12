@@ -125,6 +125,8 @@ class Signal:
     risk_reward: float = 0.0
     position_size_usd: float = 0.0
     position_size_qty: float = 0.0
+    contracts: int = 0                 # Number of futures contracts
+    contract_size: float = 0.0         # Size per contract (e.g. 0.01 BTC)
     reason: str = ""
     regime: Regime = Regime.UNKNOWN
     setup_type: SetupType = SetupType.NONE
@@ -133,19 +135,22 @@ class Signal:
 
 @dataclass
 class Position:
-    """An open paper position."""
+    """An open position (paper or live)."""
     id: str
     symbol: str
     side: Side
     leverage: float
     entry_price: float
     quantity: float               # In asset units
-    notional: float               # USD value at entry
-    margin_used: float            # Collateral locked = notional / leverage
     stop_loss: float
     take_profit: float
     liquidation_price: float
     opened_at: datetime
+    # Fields with defaults
+    contracts: int = 0            # Number of futures contracts
+    contract_size: float = 0.0    # Size per contract (e.g. 0.01 BTC)
+    notional: float = 0.0        # USD value at entry
+    margin_used: float = 0.0     # Collateral locked = notional / leverage
     candles_held: int = 0
     highest_price: float = 0.0    # For trailing stop (longs)
     lowest_price: float = 0.0     # For trailing stop (shorts)

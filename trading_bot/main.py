@@ -73,7 +73,10 @@ class TradingBot:
 
         self.risk_manager = RiskManager(config.risk, config.leverage)
         self.trade_manager = TradeManager(config.strategy)
-        self.signal_engine = SignalEngine(config.strategy, config.leverage, config.risk)
+        self.signal_engine = SignalEngine(
+            config.strategy, config.leverage, config.risk,
+            contract_sizes=config.futures.contract_sizes if config.futures.enabled else {},
+        )
 
         # Coinbase client (used for live data and live execution)
         self.coinbase_client = CoinbaseClient()
@@ -92,6 +95,7 @@ class TradingBot:
                 trade_manager=self.trade_manager,
                 logger=self.logger,
                 safety=self.safety,
+                futures_config=config.futures,
                 fee_pct=config.risk.taker_fee_pct,
             )
         else:
@@ -350,7 +354,8 @@ class TradingBot:
                 print(f"         Entry: ${sig.entry_price:,.2f}  |  Stop: ${sig.stop_loss:,.2f}  |  "
                       f"Target: ${sig.take_profit:,.2f}")
                 print(f"         Liq: ${sig.liquidation_price:,.2f} ({liq_dist:.1f}% away)  |  "
-                      f"R:R: {sig.risk_reward:.2f}  |  Size: ${sig.position_size_usd:,.2f}")
+                      f"R:R: {sig.risk_reward:.2f}  |  Size: ${sig.position_size_usd:,.2f}"
+                      + (f"  |  Contracts: {sig.contracts}" if sig.contracts > 0 else ""))
 
         # Open positions
         if self.engine.positions:

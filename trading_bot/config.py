@@ -35,15 +35,69 @@ class RiskConfig:
     max_notional_exposure: float = 50_000.0      # Total notional across all positions
     max_exposure_per_asset: float = 30_000.0     # Max notional per single asset
 
-    # Fees (simulated, based on typical taker fees)
-    taker_fee_pct: float = 0.06  # 0.06% per side (Coinbase Advanced / Binance tier)
+    # Fees (Coinbase futures taker fee)
+    taker_fee_pct: float = 0.08  # 0.08% per side (Coinbase nano futures)
+
+
+@dataclass
+class FuturesConfig:
+    """Coinbase nano futures contract specifications."""
+    enabled: bool = True
+    product_type: str = "futures"  # "futures" or "spot"
+
+    # Contract specs (Coinbase nano futures)
+    # nano BTC = 0.01 BTC per contract
+    # nano ETH = 0.1 ETH per contract
+    # nano SOL = 5 SOL per contract
+    contract_sizes: Dict[str, float] = field(default_factory=lambda: {
+        "BTC-USD": 0.01,
+        "ETH-USD": 0.1,
+        "SOL-USD": 5.0,
+    })
+
+    # Coinbase CFM (US) product IDs for dated futures
+    # Format: <ticker>-<expiry>-CDE
+    # These are the actively traded US nano futures contracts
+    perp_product_ids: Dict[str, str] = field(default_factory=lambda: {
+        "BTC-USD": "BIT-26DEC25-CDE",
+        "ETH-USD": "ETT-26DEC25-CDE",
+        "SOL-USD": "SLT-26DEC25-CDE",
+    })
+
+    # INTX (international) product IDs — perpetual futures
+    intx_product_ids: Dict[str, str] = field(default_factory=lambda: {
+        "BTC-USD": "BTC-PERP-INTX",
+        "ETH-USD": "ETH-PERP-INTX",
+        "SOL-USD": "SOL-PERP-INTX",
+    })
+
+    # Which product ID set to use: "cfm" (US) or "intx" (international)
+    product_id_mode: str = "cfm"
+
+    # Max leverage per asset (Coinbase allows up to 10x)
+    max_leverage: Dict[str, float] = field(default_factory=lambda: {
+        "BTC-USD": 10.0,
+        "ETH-USD": 10.0,
+        "SOL-USD": 5.0,
+    })
+
+    # Minimum order: 10 USDC notional
+    min_notional_usdc: float = 10.0
+    min_contracts: int = 1
+
+    # Margin type
+    margin_type: str = "CROSS"  # CROSS or ISOLATED
+
+    # Funding rate — hourly accrual, 2x daily settlement on CFM/US
+    funding_interval_hours: int = 1
+    funding_settlement_times: int = 2  # Settlements per day
 
 
 @dataclass
 class LeverageConfig:
     default_leverage: float = 2.0
-    max_leverage: float = 5.0
-    leverage_tiers: List[float] = field(default_factory=lambda: [1.0, 2.0, 3.0, 5.0])
+    max_leverage: float = 10.0
+    leverage_tiers: List[float] = field(default_factory=lambda: [1.0, 2.0, 3.0, 5.0, 7.0, 10.0])
 
     # Liquidation safety
     min_liquidation_distance_pct: float = 10.0   # Must be at least 10% from liquidation
@@ -53,11 +107,11 @@ class LeverageConfig:
     reduce_leverage_atr_multiplier: float = 1.5  # If ATR > 1.5x normal, reduce leverage
     reduce_leverage_weak_signal: bool = True      # Lower leverage on lower confidence
 
-    # Per-asset max leverage overrides
+    # Per-asset max leverage overrides (Coinbase futures max = 10x)
     asset_max_leverage: Dict[str, float] = field(default_factory=lambda: {
-        "BTC-USD": 5.0,
-        "ETH-USD": 5.0,
-        "SOL-USD": 3.0,
+        "BTC-USD": 10.0,
+        "ETH-USD": 10.0,
+        "SOL-USD": 5.0,
     })
 
 
@@ -154,6 +208,7 @@ class BotConfig:
     leverage: LeverageConfig = field(default_factory=LeverageConfig)
     strategy: StrategyConfig = field(default_factory=StrategyConfig)
     data: DataConfig = field(default_factory=DataConfig)
+    futures: FuturesConfig = field(default_factory=FuturesConfig)
     log: LogConfig = field(default_factory=LogConfig)
 
     # Master safety

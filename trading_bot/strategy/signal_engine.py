@@ -20,10 +20,12 @@ from strategy.risk import RiskManager
 class SignalEngine:
     def __init__(self, strategy_config: StrategyConfig,
                  leverage_config: LeverageConfig,
-                 risk_config: RiskConfig):
+                 risk_config: RiskConfig,
+                 contract_sizes: dict = None):
         self.cfg = strategy_config
         self.lev_cfg = leverage_config
         self.risk_cfg = risk_config
+        self.contract_sizes = contract_sizes or {}
 
     def evaluate(self, ctx: MarketContext, risk_mgr: RiskManager,
                  open_positions: List[Position]) -> Signal:
@@ -407,9 +409,11 @@ class SignalEngine:
                     reason=f"Liquidation too close even at {leverage}x leverage"
                 )
 
-        # Position sizing
-        notional, qty, margin = risk_mgr.calculate_position_size(
-            risk_mgr.equity, price, stop_loss, leverage, side
+        # Position sizing (contract-aware for futures)
+        contract_size = self.contract_sizes.get(ctx.symbol, 0.0)
+        notional, qty, margin, contracts = risk_mgr.calculate_position_size(
+            risk_mgr.equity, price, stop_loss, leverage, side,
+            contract_size=contract_size,
         )
 
         # Exposure check
@@ -452,6 +456,8 @@ class SignalEngine:
             risk_reward=rr,
             position_size_usd=notional,
             position_size_qty=qty,
+            contracts=contracts,
+            contract_size=contract_size,
             reason=reason,
             regime=regime,
             setup_type=setup,

@@ -1,15 +1,22 @@
 """
-Live execution engine for Coinbase Advanced Trade.
+Live execution engine for Coinbase Advanced Trade — FUTURES + SPOT.
 Mirrors the PaperEngine interface so the bot can swap between paper and live
 with zero strategy changes.
+
+FUTURES MODE:
+- Real LONG and SHORT via nano BTC/ETH/SOL perpetual futures
+- Actual exchange leverage (up to 10x on Coinbase)
+- Contract-based sizing (e.g. 5 contracts of nano BTC)
+- Real margin requirements
+- Stop loss orders placed on exchange
 
 SAFETY LAYERS:
 1. Must pass explicit live_mode=True + passphrase
 2. Pre-flight checks verify API connectivity and balances
-3. Max order size hard cap
+3. Max order size hard cap (configurable)
 4. Confirmation delay before first N orders
 5. All orders logged before and after execution
-6. Emergency kill switch halts all trading
+6. Emergency kill switch halts all trading + closes positions
 7. Position tracking mirrors paper engine exactly
 """
 import uuid
@@ -45,40 +52,31 @@ class SafetyGate:
 
     def check(self, signal: Signal, available_balance: float,
               logger: Logger) -> tuple:
-        """
-        Run all safety checks. Returns (allowed: bool, reason: str).
-        """
         if not self.enabled:
             return False, "SAFETY GATE: Trading disabled by kill switch"
 
-        # Day rollover
         today = datetime.utcnow().date()
         if today != self.day_marker:
             self.orders_today = 0
             self.day_marker = today
 
-        # Max order size
         margin_needed = signal.position_size_usd / signal.leverage
         if margin_needed > self.max_order_usd:
             return False, (f"SAFETY GATE: Order margin ${margin_needed:.2f} exceeds "
                            f"max ${self.max_order_usd:.2f}")
 
-        # Daily order limit
         if self.orders_today >= self.max_daily_orders:
             return False, f"SAFETY GATE: Daily order limit ({self.max_daily_orders}) reached"
 
-        # Balance reserve
         if available_balance - margin_needed < self.min_balance_reserve_usd:
             return False, (f"SAFETY GATE: Would leave only "
                            f"${available_balance - margin_needed:.2f} "
                            f"(min reserve: ${self.min_balance_reserve_usd:.2f})")
 
-        # Confirmation period for first N trades
         if self.total_orders_ever < self.confirmation_trades:
             logger.warn(
                 f"SAFETY: Trade #{self.total_orders_ever + 1} of "
-                f"{self.confirmation_trades} confirmation period. "
-                f"Using minimum size."
+                f"{self.confirmation_trades} confirmation period."
             )
 
         return True, "OK"
@@ -93,154 +91,193 @@ class SafetyGate:
 
 class LiveEngine:
     """
-    Live Coinbase execution engine.
+    Live Coinbase execution engine for FUTURES (perps).
+    Supports real LONG and SHORT positions via nano futures contracts.
     Same interface as PaperEngine for seamless swap.
-
-    NOTE: Coinbase spot trading does not have native leverage.
-    This engine executes spot market orders. For leveraged positions,
-    the bot tracks virtual leverage internally — the actual risk is
-    the spot position size (margin amount), not the notional.
     """
     def __init__(self, client: CoinbaseClient, risk_manager: RiskManager,
                  trade_manager: TradeManager, logger: Logger,
-                 safety: SafetyGate, fee_pct: float = 0.06):
+                 safety: SafetyGate, futures_config=None,
+                 fee_pct: float = 0.08):
         self.client = client
         self.risk_mgr = risk_manager
         self.trade_mgr = trade_manager
         self.logger = logger
         self.safety = safety
         self.fee_pct = fee_pct
+        self.futures_config = futures_config
 
         self.positions: List[Position] = []
         self.closed_trades: List[TradeLog] = []
-        self.pending_orders: Dict[str, dict] = {}
+        self.exchange_order_ids: Dict[str, List[str]] = {}  # position_id -> [order_ids]
 
         self.total_fees = 0.0
         self.total_realized_pnl = 0.0
         self.winners: List[float] = []
         self.losers: List[float] = []
 
+    def _get_perp_product_id(self, symbol: str) -> str:
+        """Map internal symbol to Coinbase futures product ID.
+        Uses CFM (US) or INTX (international) IDs based on config."""
+        if self.futures_config:
+            mode = getattr(self.futures_config, 'product_id_mode', 'cfm')
+            if mode == 'intx':
+                intx_ids = getattr(self.futures_config, 'intx_product_ids', {})
+                return intx_ids.get(symbol, symbol)
+            return self.futures_config.perp_product_ids.get(symbol, symbol)
+        return symbol
+
+    def _get_contract_size(self, symbol: str) -> float:
+        if self.futures_config:
+            return self.futures_config.contract_sizes.get(symbol, 0.01)
+        return 0.01
+
     def preflight_check(self) -> tuple:
-        """
-        Run before trading starts. Verifies:
-        1. API connection works
-        2. Authentication is valid
-        3. Account has sufficient balance
-        Returns (ok: bool, message: str)
-        """
+        """Verify API connection, auth, and balance before trading."""
         ok, msg = self.client.test_connection()
         if not ok:
             return False, f"PREFLIGHT FAILED: {msg}"
-
         if not self.client.authenticated:
             return False, "PREFLIGHT FAILED: API keys not configured"
 
         try:
-            usd_balance = self.client.get_balance("USD")
-            if usd_balance < self.safety.min_balance_reserve_usd:
-                return False, (f"PREFLIGHT FAILED: USD balance ${usd_balance:.2f} "
+            # Check USDC balance (needed for futures margin)
+            usdc_bal = self.client.get_balance("USDC")
+            if usdc_bal < self.safety.min_balance_reserve_usd:
+                return False, (f"PREFLIGHT FAILED: USDC balance ${usdc_bal:.2f} "
                                f"below minimum ${self.safety.min_balance_reserve_usd:.2f}")
 
-            balances = self.client.get_all_balances()
-            self.logger.event(
-                f"PREFLIGHT OK: USD=${usd_balance:.2f} | "
-                f"Balances: {balances}"
-            )
-            return True, f"Connected. USD balance: ${usd_balance:.2f}"
+            # Try to get futures balance
+            futures_msg = ""
+            try:
+                fb = self.client.get_futures_balance()
+                buying_power = float(fb.get("futures_buying_power", 0))
+                avail_margin = float(fb.get("available_margin", 0))
+                futures_msg = (f" | Futures buying power: ${buying_power:,.2f}"
+                               f" | Available margin: ${avail_margin:,.2f}")
+            except Exception:
+                futures_msg = " | Warning: futures balance not accessible"
+
+            self.logger.event(f"PREFLIGHT OK: USDC=${usdc_bal:.2f}{futures_msg}")
+            return True, f"Connected. USDC balance: ${usdc_bal:.2f}{futures_msg}"
 
         except Exception as e:
             return False, f"PREFLIGHT FAILED: {e}"
 
     def execute_signal(self, signal: Signal) -> Optional[Position]:
         """
-        Execute a trade signal on Coinbase.
-        For buys: places a market buy order for the margin amount.
-        For sells/shorts: NOTE — Coinbase spot doesn't support shorting.
-        Short signals are tracked as virtual positions for paper-like tracking,
-        but actual execution only happens for longs on spot.
+        Execute a trade signal via Coinbase futures.
+        Both LONG and SHORT are real exchange orders.
         """
         if signal.action == Action.NO_TRADE:
             return None
-
         side = signal.side
         if side is None:
             return None
 
-        # For spot trading, we can only execute buys (longs).
-        # Shorts are tracked virtually — no actual exchange order.
-        is_virtual_short = (side == Side.SHORT)
+        product_id = self._get_perp_product_id(signal.symbol)
+        contracts = signal.contracts
+        if contracts < 1:
+            contracts = 1
 
-        # The actual USD to spend is the margin (notional / leverage)
         margin_usd = signal.position_size_usd / signal.leverage
 
-        if not is_virtual_short:
-            # Safety gate
-            usd_balance = self.client.get_balance("USD")
-            allowed, reason = self.safety.check(signal, usd_balance, self.logger)
-            if not allowed:
-                self.logger.warn(f"BLOCKED: {reason}")
-                return None
+        # Safety gate
+        try:
+            usdc_bal = self.client.get_balance("USDC")
+        except Exception:
+            usdc_bal = self.risk_mgr.cash
 
-            # During confirmation period, use minimum size
-            if self.safety.total_orders_ever < self.safety.confirmation_trades:
-                margin_usd = min(margin_usd, 25.0)  # $25 minimum during warmup
-                self.logger.warn(f"CONFIRMATION PERIOD: Reduced order to ${margin_usd:.2f}")
+        allowed, reason = self.safety.check(signal, usdc_bal, self.logger)
+        if not allowed:
+            self.logger.warn(f"BLOCKED: {reason}")
+            return None
 
-            # Log BEFORE execution
-            self.logger.event(
-                f"PLACING ORDER: BUY {signal.symbol} | "
-                f"Quote size: ${margin_usd:.2f} | "
-                f"Signal confidence: {signal.confidence:.2f}"
+        # During confirmation period, reduce to 1 contract
+        if self.safety.total_orders_ever < self.safety.confirmation_trades:
+            contracts = 1
+            contract_size = self._get_contract_size(signal.symbol)
+            margin_usd = (contracts * contract_size * signal.entry_price) / signal.leverage
+            self.logger.warn(f"CONFIRMATION PERIOD: Reduced to {contracts} contract(s)")
+
+        # Determine order side
+        order_side = "BUY" if side == Side.LONG else "SELL"
+
+        # Log BEFORE execution
+        self.logger.event(
+            f"PLACING FUTURES ORDER: {order_side} {contracts} contracts {product_id} | "
+            f"Signal confidence: {signal.confidence:.2f} | "
+            f"Leverage: {signal.leverage}x"
+        )
+
+        # Execute on Coinbase
+        try:
+            leverage_str = str(int(signal.leverage))
+            result = self.client.place_futures_market_order(
+                product_id=product_id,
+                side=order_side,
+                contracts=contracts,
+                leverage=leverage_str,
             )
+            order_id = result.get("success_response", {}).get("order_id", "unknown")
+            self.safety.record_order()
+            self.logger.event(f"ORDER FILLED: {order_id} | {order_side} {contracts}x {product_id}")
+        except Exception as e:
+            self.logger.error(f"ORDER FAILED: {e}")
+            return None
 
-            # Execute on Coinbase
-            try:
-                result = self.client.place_market_order(
-                    product_id=signal.symbol,
-                    side="BUY",
-                    quote_size=f"{margin_usd:.2f}",
-                )
-                order_id = result.get("success_response", {}).get("order_id", "unknown")
-                self.safety.record_order()
-
-                self.logger.event(
-                    f"ORDER FILLED: {order_id} | BUY {signal.symbol} ${margin_usd:.2f}"
-                )
-            except Exception as e:
-                self.logger.error(f"ORDER FAILED: {e}")
-                return None
-        else:
-            self.logger.event(
-                f"VIRTUAL SHORT: {signal.symbol} (spot exchange, no actual order) | "
-                f"Tracked for signal validation"
+        # Place stop loss order on exchange
+        stop_order_id = None
+        try:
+            stop_side = "SELL" if side == Side.LONG else "BUY"
+            stop_result = self.client.place_futures_stop_order(
+                product_id=product_id,
+                side=stop_side,
+                contracts=contracts,
+                stop_price=signal.stop_loss,
             )
+            stop_order_id = stop_result.get("success_response", {}).get("order_id")
+            self.logger.event(f"STOP ORDER PLACED: {stop_order_id} @ ${signal.stop_loss:,.2f}")
+        except Exception as e:
+            self.logger.warn(f"STOP ORDER FAILED (will manage in software): {e}")
 
-        # Calculate entry fee
-        entry_fee = margin_usd * (self.fee_pct / 100.0)
+        # Calculate fees
+        contract_size = self._get_contract_size(signal.symbol)
+        actual_qty = contracts * contract_size
+        actual_notional = actual_qty * signal.entry_price
+        entry_fee = actual_notional * (self.fee_pct / 100.0)
 
-        # Build position (same structure as paper engine)
+        # Build position
         position = Position(
             id=str(uuid.uuid4())[:8],
             symbol=signal.symbol,
             side=side,
             leverage=signal.leverage,
             entry_price=signal.entry_price,
-            quantity=signal.position_size_qty,
-            notional=signal.position_size_usd,
-            margin_used=margin_usd,
+            quantity=actual_qty,
+            contracts=contracts,
+            contract_size=contract_size,
+            notional=actual_notional,
+            margin_used=actual_notional / signal.leverage,
             stop_loss=signal.stop_loss,
             take_profit=signal.take_profit,
             liquidation_price=signal.liquidation_price,
             opened_at=datetime.utcnow(),
             highest_price=signal.entry_price,
             lowest_price=signal.entry_price,
-            original_quantity=signal.position_size_qty,
+            original_quantity=actual_qty,
             fees_paid=entry_fee,
             signal_confidence=signal.confidence,
             signal_reason=signal.reason,
         )
 
-        self.risk_mgr.cash -= (margin_usd + entry_fee)
+        # Track exchange order IDs
+        order_ids = [order_id]
+        if stop_order_id:
+            order_ids.append(stop_order_id)
+        self.exchange_order_ids[position.id] = order_ids
+
+        self.risk_mgr.cash -= (position.margin_used + entry_fee)
         self.total_fees += entry_fee
         self.positions.append(position)
 
@@ -272,8 +309,15 @@ class LiveEngine:
 
     def _close_position(self, pos: Position, exit_price: float,
                         exit_reason: ExitReason) -> TradeLog:
-        """Close a position. For real longs, sells on Coinbase."""
-        is_virtual_short = (pos.side == Side.SHORT)
+        """Close a futures position on exchange."""
+        product_id = self._get_perp_product_id(pos.symbol)
+
+        # Cancel any open stop/TP orders for this position
+        if pos.id in self.exchange_order_ids:
+            try:
+                self.client.cancel_orders(self.exchange_order_ids[pos.id])
+            except Exception as e:
+                self.logger.warn(f"Cancel orders failed: {e}")
 
         # Calculate PnL
         if pos.side == Side.LONG:
@@ -286,26 +330,34 @@ class LiveEngine:
         total_fees = pos.fees_paid + exit_fee
         net_pnl = raw_pnl - total_fees
 
-        # Execute sell on exchange for real longs
-        if not is_virtual_short and pos.quantity > 0:
+        # Close on exchange using dedicated close_position endpoint
+        try:
+            self.logger.event(
+                f"CLOSING FUTURES: {pos.contracts}x {product_id} | "
+                f"Reason: {exit_reason.value}"
+            )
+            result = self.client.close_futures_position(
+                product_id=product_id,
+                size=pos.contracts,
+            )
+            order_id = result.get("success_response", {}).get("order_id", "unknown")
+            self.safety.record_order()
+            self.logger.event(f"CLOSE FILLED: {order_id}")
+        except Exception as e:
+            # Fallback: try placing an opposite-side market order
+            self.logger.warn(f"close_position endpoint failed: {e}, trying market order fallback")
             try:
-                coin = pos.symbol.split("-")[0]
-                self.logger.event(
-                    f"CLOSING ORDER: SELL {pos.quantity:.8f} {coin} | "
-                    f"Reason: {exit_reason.value}"
-                )
-                result = self.client.place_market_order(
-                    product_id=pos.symbol,
-                    side="SELL",
-                    base_size=f"{pos.quantity:.8f}",
+                close_side = "SELL" if pos.side == Side.LONG else "BUY"
+                result = self.client.place_futures_market_order(
+                    product_id=product_id,
+                    side=close_side,
+                    contracts=pos.contracts,
                 )
                 order_id = result.get("success_response", {}).get("order_id", "unknown")
                 self.safety.record_order()
-                self.logger.event(f"CLOSE FILLED: {order_id}")
-            except Exception as e:
-                self.logger.error(f"CLOSE ORDER FAILED: {e}")
-                # Still record the trade for tracking, but flag it
-                net_pnl = 0  # Don't count PnL if we couldn't actually close
+                self.logger.event(f"CLOSE FILLED (fallback): {order_id}")
+            except Exception as e2:
+                self.logger.error(f"CLOSE ORDER FAILED (both methods): {e2}")
 
         # Return margin + PnL
         self.risk_mgr.cash += pos.margin_used + net_pnl
@@ -381,19 +433,76 @@ class LiveEngine:
         return sum(self.losers) / len(self.losers) if self.losers else 0.0
 
     def emergency_close_all(self):
-        """Emergency: close all positions immediately."""
+        """Emergency: close ALL futures positions immediately."""
         self.logger.warn("EMERGENCY CLOSE ALL POSITIONS")
         for pos in list(self.positions):
             try:
-                if pos.side == Side.LONG:
-                    coin = pos.symbol.split("-")[0]
-                    self.client.place_market_order(
-                        product_id=pos.symbol,
-                        side="SELL",
-                        base_size=f"{pos.quantity:.8f}",
+                product_id = self._get_perp_product_id(pos.symbol)
+                try:
+                    self.client.close_futures_position(
+                        product_id=product_id,
+                        size=pos.contracts,
                     )
+                except Exception:
+                    # Fallback to opposite-side market order
+                    close_side = "SELL" if pos.side == Side.LONG else "BUY"
+                    self.client.place_futures_market_order(
+                        product_id=product_id,
+                        side=close_side,
+                        contracts=pos.contracts,
+                    )
+                self.logger.event(f"EMERGENCY CLOSED: {pos.side.value} {pos.symbol}")
                 self.positions.remove(pos)
             except Exception as e:
                 self.logger.error(f"EMERGENCY CLOSE FAILED for {pos.symbol}: {e}")
 
+        # Cancel all open orders
+        try:
+            open_orders = self.client.list_open_orders()
+            if open_orders:
+                order_ids = [o.get("order_id") for o in open_orders if o.get("order_id")]
+                if order_ids:
+                    self.client.cancel_orders(order_ids)
+                    self.logger.event(f"CANCELLED {len(order_ids)} open orders")
+        except Exception as e:
+            self.logger.error(f"CANCEL ORDERS FAILED: {e}")
+
         self.safety.kill()
+
+    def sync_exchange_positions(self):
+        """
+        Query exchange for open futures positions and log any discrepancy
+        between our tracked state and what's actually on Coinbase.
+        Called periodically as a safety reconciliation step.
+        """
+        try:
+            exchange_positions = self.client.get_futures_positions()
+            exchange_count = len(exchange_positions)
+            local_count = len(self.positions)
+
+            if exchange_count != local_count:
+                self.logger.warn(
+                    f"POSITION MISMATCH: exchange has {exchange_count} positions, "
+                    f"bot tracking {local_count}"
+                )
+
+            for ep in exchange_positions:
+                pid = ep.get("product_id", "")
+                contracts = int(ep.get("number_of_contracts", 0))
+                unrealized = float(ep.get("unrealized_pnl", 0))
+                avg_entry = float(ep.get("avg_entry_price", 0))
+                self.logger.event(
+                    f"EXCHANGE POS: {pid} | {contracts} contracts | "
+                    f"Entry: ${avg_entry:,.2f} | uPnL: ${unrealized:,.2f}"
+                )
+
+        except Exception as e:
+            self.logger.warn(f"Exchange position sync failed: {e}")
+
+    def get_exchange_balance_summary(self) -> dict:
+        """Get futures portfolio summary from Coinbase."""
+        try:
+            return self.client.get_futures_balance()
+        except Exception as e:
+            self.logger.warn(f"Futures balance query failed: {e}")
+            return {}
