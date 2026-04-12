@@ -37,12 +37,12 @@ def select_leverage(confidence: float, regime: Regime, indicators: IndicatorSnap
     else:
         lev = 2.0  # Weak signal — minimal leverage
 
-    # Volatility reduction
+    # Volatility reduction — only cut leverage in extreme conditions
     if indicators and indicators.atr_ratio:
-        if indicators.atr_ratio > config.reduce_leverage_atr_multiplier:
-            # High vol: cut leverage by ratio
-            reduction = indicators.atr_ratio / config.reduce_leverage_atr_multiplier
-            lev = max(1.0, lev / reduction)
+        if indicators.atr_ratio > 2.0:
+            # Extreme vol: reduce leverage moderately
+            reduction = indicators.atr_ratio / 2.0
+            lev = max(2.0, lev / reduction)
 
     # Regime-based caps — still allow meaningful leverage
     if regime == Regime.HIGH_VOLATILITY:

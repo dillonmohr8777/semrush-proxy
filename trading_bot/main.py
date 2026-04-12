@@ -465,8 +465,8 @@ def parse_args():
                         help="Cycle interval in seconds (default: 10)")
     parser.add_argument("--balance", type=float, default=10000.0,
                         help="Starting paper balance (default: 10000)")
-    parser.add_argument("--max-leverage", type=float, default=5.0,
-                        help="Maximum allowed leverage (default: 5)")
+    parser.add_argument("--max-leverage", type=float, default=10.0,
+                        help="Maximum allowed leverage (default: 10)")
     parser.add_argument("--risk-pct", type=float, default=0.75,
                         help="Risk per trade %% (default: 0.75)")
     parser.add_argument("--demo", action="store_true", default=True,
