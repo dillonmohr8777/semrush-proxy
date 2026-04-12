@@ -80,6 +80,43 @@ class MarketDataClient:
         return round(new_price, 2)
 
 
+    def seed_from_coinbase(self, coinbase_client, candle_builder,
+                           timeframes: Dict[str, int]):
+        """
+        Seed candle history from Coinbase Advanced Trade API.
+        Fetches real historical candles so indicators are available immediately.
+        """
+        granularity_map = {
+            "1m": "ONE_MINUTE",
+            "5m": "FIVE_MINUTE",
+            "15m": "FIFTEEN_MINUTE",
+            "1h": "ONE_HOUR",
+        }
+
+        for symbol in self.symbols:
+            for tf_name, tf_seconds in timeframes.items():
+                gran = granularity_map.get(tf_name)
+                if not gran:
+                    continue
+                try:
+                    candles = coinbase_client.get_candles(
+                        product_id=symbol,
+                        granularity=gran,
+                        limit=250,
+                    )
+                    if symbol not in candle_builder._candles:
+                        candle_builder._candles[symbol] = {}
+                        candle_builder._building[symbol] = {}
+                    candle_builder._candles[symbol][tf_name] = candles
+                    candle_builder._building[symbol][tf_name] = None
+
+                    coin = symbol.split("-")[0]
+                    print(f"    {coin} {tf_name}: {len(candles)} candles from Coinbase")
+                except Exception as e:
+                    coin = symbol.split("-")[0]
+                    print(f"    {coin} {tf_name}: FAILED ({e})")
+
+
 class CandleBuilder:
     """
     Builds candle history from tick prices.

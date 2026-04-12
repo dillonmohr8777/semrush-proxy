@@ -38,6 +38,8 @@ from strategy.risk import RiskManager
 from strategy.leverage_model import liquidation_distance_pct
 from execution.paper_engine import PaperEngine
 from execution.trade_manager import TradeManager
+from execution.coinbase_client import CoinbaseClient
+from execution.live_engine import LiveEngine, SafetyGate
 from portfolio.drawdown import DrawdownTracker
 from portfolio.metrics import compute_metrics, format_metrics_table
 
@@ -47,6 +49,7 @@ class TradingBot:
         self.config = config
         self.running = False
         self.cycle_count = 0
+        self.live_mode = not config.paper_mode
 
         # Initialize components
         self.logger = Logger(
@@ -72,10 +75,31 @@ class TradingBot:
         self.trade_manager = TradeManager(config.strategy)
         self.signal_engine = SignalEngine(config.strategy, config.leverage, config.risk)
 
-        self.paper_engine = PaperEngine(
-            self.risk_manager, self.trade_manager,
-            self.logger, fee_pct=config.risk.taker_fee_pct,
-        )
+        # Coinbase client (used for live data and live execution)
+        self.coinbase_client = CoinbaseClient()
+
+        if self.live_mode:
+            # LIVE MODE: real Coinbase execution with safety gates
+            self.safety = SafetyGate(
+                max_order_usd=500.0,        # Hard cap per order
+                max_daily_orders=20,
+                confirmation_trades=5,       # First 5 trades use min size
+                min_balance_reserve_usd=100.0,
+            )
+            self.engine = LiveEngine(
+                client=self.coinbase_client,
+                risk_manager=self.risk_manager,
+                trade_manager=self.trade_manager,
+                logger=self.logger,
+                safety=self.safety,
+                fee_pct=config.risk.taker_fee_pct,
+            )
+        else:
+            # PAPER MODE: simulated execution
+            self.engine = PaperEngine(
+                self.risk_manager, self.trade_manager,
+                self.logger, fee_pct=config.risk.taker_fee_pct,
+            )
 
         self.drawdown_tracker = DrawdownTracker(config.risk.starting_balance)
 
@@ -86,11 +110,31 @@ class TradingBot:
         signal.signal(signal.SIGTERM, self._shutdown)
 
         self._print_banner()
-        self.logger.event("Bot started")
+        self.logger.event(f"Bot started in {'LIVE' if self.live_mode else 'PAPER'} mode")
 
-        # Seed historical candles so indicators are available immediately
+        # LIVE MODE: preflight checks
+        if self.live_mode:
+            print("\n  Running preflight checks...")
+            ok, msg = self.engine.preflight_check()
+            if not ok:
+                print(f"\n  *** {msg} ***")
+                print("  Cannot start in live mode. Fix the issue or use --demo.")
+                return
+            print(f"  {msg}")
+            print("\n  *** LIVE MODE ACTIVE — REAL MONEY AT RISK ***")
+            print("  Safety gates: max $500/order, 5-trade confirmation period")
+            print("  Press Ctrl+C to stop.\n")
+
+        # Seed historical candles
         print("\n  Seeding historical candle data...")
-        self._seed_candles()
+        if not self.config.data.demo_mode and self.coinbase_client.authenticated:
+            # Use real Coinbase candle data
+            self.market_data.seed_from_coinbase(
+                self.coinbase_client, self.candle_builder,
+                self.config.data.timeframes,
+            )
+        else:
+            self._seed_candles()
         print("  Candle history seeded. Trading active.\n")
 
         try:
@@ -196,10 +240,10 @@ class TradingBot:
             s: all_indicators[s].get(self.config.data.primary_timeframe)
             for s in self.config.data.symbols
         }
-        closed = self.paper_engine.update_positions(prices, primary_indicators)
+        closed = self.engine.update_positions(prices, primary_indicators)
 
         # Get equity snapshot
-        eq = self.paper_engine.get_equity_snapshot(prices)
+        eq = self.engine.get_equity_snapshot(prices)
         self.drawdown_tracker.update(eq.equity)
         self.logger.log_equity(eq)
 
@@ -217,13 +261,13 @@ class TradingBot:
             )
 
             sig = self.signal_engine.evaluate(
-                ctx, self.risk_manager, self.paper_engine.positions
+                ctx, self.risk_manager, self.engine.positions
             )
             signals[symbol] = sig
 
             # Execute if actionable
             if sig.action in (Action.LONG, Action.SHORT):
-                self.paper_engine.execute_signal(sig)
+                self.engine.execute_signal(sig)
 
         # Save state
         self._save_state(prices, signals, eq)
@@ -262,7 +306,7 @@ class TradingBot:
                      eq, closed):
         """Print structured cycle output."""
         print(f"\n{'─' * 70}")
-        print(f"  [{ts}]  Cycle #{self.cycle_count}  |  Mode: PAPER  |  "
+        print(f"  [{ts}]  Cycle #{self.cycle_count}  |  Mode: {'LIVE' if self.live_mode else 'PAPER'}  |  "
               f"Equity: ${eq.equity:,.2f}  |  DD: {eq.drawdown_pct:.1f}%")
         print(f"{'─' * 70}")
 
@@ -309,10 +353,10 @@ class TradingBot:
                       f"R:R: {sig.risk_reward:.2f}  |  Size: ${sig.position_size_usd:,.2f}")
 
         # Open positions
-        if self.paper_engine.positions:
+        if self.engine.positions:
             print(f"\n  {'─' * 66}")
             print(f"  OPEN POSITIONS:")
-            for pos in self.paper_engine.positions:
+            for pos in self.engine.positions:
                 coin = pos.symbol.split("-")[0]
                 price = prices.get(pos.symbol, pos.entry_price)
                 pnl = pos.mark_to_market(price)
@@ -333,7 +377,7 @@ class TradingBot:
               f"Win Rate: {self.risk_manager.win_rate:.0f}%  |  "
               f"Trades: {self.risk_manager.total_trades}  |  "
               f"Consec L: {self.risk_manager.consecutive_losses}  |  "
-              f"PF: {self.paper_engine.profit_factor:.2f}")
+              f"PF: {self.engine.profit_factor:.2f}")
 
         if self.risk_manager.kill_switch_active:
             print(f"\n  *** KILL SWITCH ACTIVE — TRADING HALTED ***")
@@ -360,7 +404,7 @@ class TradingBot:
                     "qty": p.quantity,
                     "unrealized_pnl": p.unrealized_pnl,
                 }
-                for p in self.paper_engine.positions
+                for p in self.engine.positions
             ],
             "signals": {
                 s: {
@@ -389,7 +433,7 @@ class TradingBot:
         print(f"{'=' * 70}")
 
         metrics = compute_metrics(
-            self.paper_engine.closed_trades,
+            self.engine.closed_trades,
             self.risk_manager.equity,
             self.config.risk.starting_balance,
             self.risk_manager.peak_equity,
@@ -423,7 +467,13 @@ def parse_args():
     parser.add_argument("--demo", action="store_true", default=True,
                         help="Use demo prices (default: True)")
     parser.add_argument("--live-data", action="store_true", default=False,
-                        help="Use live Coinbase API data")
+                        help="Use live Coinbase API data (paper execution, real prices)")
+    parser.add_argument("--live-trade", action="store_true", default=False,
+                        help="LIVE TRADING: real money on Coinbase (requires API keys + passphrase)")
+    parser.add_argument("--passphrase", type=str, default="",
+                        help="Safety passphrase to enable live trading")
+    parser.add_argument("--max-order-usd", type=float, default=500.0,
+                        help="Maximum USD per order in live mode (default: 500)")
     return parser.parse_args()
 
 
@@ -433,15 +483,46 @@ def main():
     config = BotConfig()
     config.data.symbols = args.symbols
     config.data.cycle_interval_seconds = args.interval
-    config.data.demo_mode = not args.live_data
     config.risk.starting_balance = args.balance
     config.leverage.max_leverage = args.max_leverage
     config.risk.risk_per_trade_pct = args.risk_pct
 
-    # Safety check
-    if not config.paper_mode:
-        print("ERROR: Live mode is not enabled. This is a paper trading system.")
-        sys.exit(1)
+    # Mode selection
+    if args.live_trade:
+        # LIVE MODE: requires passphrase and API keys
+        if args.passphrase != config.live_mode_passphrase:
+            print("=" * 60)
+            print("  LIVE TRADING REJECTED")
+            print("=" * 60)
+            print("  You must provide the correct --passphrase to enable live trading.")
+            print("  This is a safety measure to prevent accidental live execution.")
+            print(f"\n  Also required: COINBASE_API_KEY and COINBASE_API_SECRET")
+            print("  environment variables must be set.")
+            print("\n  If you're not ready, use --live-data for real prices + paper trading.")
+            print("=" * 60)
+            sys.exit(1)
+
+        api_key = os.environ.get("COINBASE_API_KEY", "")
+        api_secret = os.environ.get("COINBASE_API_SECRET", "")
+        if not api_key or not api_secret:
+            print("ERROR: COINBASE_API_KEY and COINBASE_API_SECRET must be set.")
+            sys.exit(1)
+
+        config.paper_mode = False
+        config.data.demo_mode = False
+        print("\n  *** WARNING: LIVE TRADING MODE ***")
+        print("  Real money will be used. Max order: $" + f"{args.max_order_usd:.0f}")
+        print("  Starting in 5 seconds... Ctrl+C to abort.\n")
+        time.sleep(5)
+
+    elif args.live_data:
+        # Real prices, paper execution
+        config.paper_mode = True
+        config.data.demo_mode = False
+    else:
+        # Full demo
+        config.paper_mode = True
+        config.data.demo_mode = True
 
     bot = TradingBot(config)
     bot.start()
