@@ -11,7 +11,7 @@ Supports:
 - Futures position listing
 - Real-time ticker prices
 
-Authentication uses Coinbase API key + secret with HMAC-SHA256 signing.
+Authentication uses CDP API keys with JWT/ES256 signing.
 API keys are loaded from environment variables — NEVER hardcoded.
 """
 import os
@@ -21,11 +21,15 @@ import uuid
 import hmac
 import hashlib
 import math
+import secrets
 import urllib.request
 import urllib.error
 import urllib.parse
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
+
+import jwt
+from cryptography.hazmat.primitives import serialization
 
 from utils.types import Candle, Side
 from utils.retry import retry
@@ -36,24 +40,41 @@ COINBASE_V2_BASE = "https://api.coinbase.com/v2"
 
 
 class CoinbaseAuth:
-    """HMAC-SHA256 authentication for Coinbase Advanced Trade API."""
+    """JWT/ES256 authentication for Coinbase Developer Platform (CDP) API keys."""
+
     def __init__(self, api_key: str, api_secret: str):
-        self.api_key = api_key
-        self.api_secret = api_secret
+        self.api_key = api_key  # e.g. "organizations/.../apiKeys/..."
+        # Parse the EC private key from PEM string
+        pem = api_secret.replace("\\n", "\n").encode("utf-8")
+        self.private_key = serialization.load_pem_private_key(pem, password=None)
+
+    def _build_jwt(self, method: str, path: str) -> str:
+        """Build a signed JWT for Coinbase CDP API authentication."""
+        now = int(time.time())
+        uri = f"{method.upper()} api.coinbase.com{path}"
+
+        payload = {
+            "sub": self.api_key,
+            "iss": "coinbase-cloud",
+            "nbf": now,
+            "exp": now + 120,  # 2 minute expiry
+            "aud": ["retail_rest_api_proxy"],
+            "uri": uri,
+        }
+
+        headers = {
+            "kid": self.api_key,
+            "nonce": secrets.token_hex(16),
+            "typ": "JWT",
+        }
+
+        return jwt.encode(payload, self.private_key, algorithm="ES256", headers=headers)
 
     def sign_request(self, method: str, path: str, body: str = "") -> Dict[str, str]:
-        timestamp = str(int(time.time()))
-        message = timestamp + method.upper() + path + body
-        signature = hmac.new(
-            self.api_secret.encode("utf-8"),
-            message.encode("utf-8"),
-            hashlib.sha256,
-        ).hexdigest()
-
+        """Generate authorization headers using JWT Bearer token."""
+        token = self._build_jwt(method, path)
         return {
-            "CB-ACCESS-KEY": self.api_key,
-            "CB-ACCESS-SIGN": signature,
-            "CB-ACCESS-TIMESTAMP": timestamp,
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
             "User-Agent": "TradingBot/2.0",
         }
@@ -66,6 +87,9 @@ class CoinbaseClient:
     """
     def __init__(self, api_key: str = "", api_secret: str = "",
                  timeout: int = 10):
+        # Try loading from .env file if env vars not set
+        self._load_dotenv()
+
         self.api_key = api_key or os.environ.get("COINBASE_API_KEY", "")
         self.api_secret = api_secret or os.environ.get("COINBASE_API_SECRET", "")
         self.timeout = timeout
@@ -75,6 +99,26 @@ class CoinbaseClient:
             self.auth = CoinbaseAuth(self.api_key, self.api_secret)
         else:
             self.auth = None
+
+    @staticmethod
+    def _load_dotenv():
+        """Load .env file from trading_bot directory if it exists."""
+        env_paths = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env"),
+            os.path.join(os.getcwd(), ".env"),
+        ]
+        for env_path in env_paths:
+            if os.path.exists(env_path):
+                with open(env_path) as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            key, _, value = line.partition("=")
+                            key = key.strip()
+                            value = value.strip()
+                            if key and key not in os.environ:
+                                os.environ[key] = value
+                break
 
     def _check_auth(self):
         if not self.authenticated:
