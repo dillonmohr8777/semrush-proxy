@@ -25,15 +25,17 @@ def select_leverage(confidence: float, regime: Regime, indicators: IndicatorSnap
     # Asset-specific cap
     max_lev = config.asset_max_leverage.get(symbol, config.max_leverage)
 
-    # Confidence-based adjustment
-    if confidence >= 0.8:
+    # Confidence-based adjustment — scale up to max leverage
+    if confidence >= 0.85:
+        lev = min(max_lev, 10.0)
+    elif confidence >= 0.75:
+        lev = min(max_lev, 7.0)
+    elif confidence >= 0.65:
         lev = min(max_lev, 5.0)
-    elif confidence >= 0.7:
+    elif confidence >= 0.55:
         lev = min(max_lev, 3.0)
-    elif confidence >= 0.6:
-        lev = min(max_lev, 2.0)
     else:
-        lev = 1.0  # Weak signal — no leverage
+        lev = 2.0  # Weak signal — minimal leverage
 
     # Volatility reduction
     if indicators and indicators.atr_ratio:
@@ -42,13 +44,13 @@ def select_leverage(confidence: float, regime: Regime, indicators: IndicatorSnap
             reduction = indicators.atr_ratio / config.reduce_leverage_atr_multiplier
             lev = max(1.0, lev / reduction)
 
-    # Regime-based caps
+    # Regime-based caps — still allow meaningful leverage
     if regime == Regime.HIGH_VOLATILITY:
-        lev = min(lev, 1.0)  # No leverage in extreme vol
+        lev = min(lev, 3.0)
     elif regime == Regime.CHOPPY:
-        lev = min(lev, 1.0)
+        lev = min(lev, 3.0)
     elif regime == Regime.RANGING:
-        lev = min(lev, 2.0)
+        lev = min(lev, 7.0)
 
     # Snap to nearest tier
     lev = _snap_to_tier(lev, config.leverage_tiers)

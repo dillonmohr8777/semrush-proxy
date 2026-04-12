@@ -95,7 +95,7 @@ class FuturesConfig:
 
 @dataclass
 class LeverageConfig:
-    default_leverage: float = 2.0
+    default_leverage: float = 5.0
     max_leverage: float = 10.0
     leverage_tiers: List[float] = field(default_factory=lambda: [1.0, 2.0, 3.0, 5.0, 7.0, 10.0])
 
