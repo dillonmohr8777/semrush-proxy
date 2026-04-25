@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MOHR — Move · Optimize · Harness · Run</title>
+<!--
+  Drop-in animated motion section for mohr-media-site.vercel.app
+  Self-contained. No build step. No external deps.
+  Just paste <section class="mohr-motion">…</section> + the <style> block
+  into your page (or import the whole file as a component).
+-->
+<style>
+  :root {
+    --mohr-bg-0: #07070b;
+    --mohr-bg-1: #0d0d14;
+    --mohr-ink: #f6f5ef;
+    --mohr-ink-dim: rgba(246, 245, 239, 0.55);
+    --mohr-accent: #ff5b1f;     /* warm signal orange */
+    --mohr-accent-2: #f9c846;   /* sun */
+    --mohr-accent-3: #6ee7ff;   /* cyan glow */
+    --mohr-accent-4: #b388ff;   /* violet */
+    --mohr-line: rgba(246, 245, 239, 0.08);
+    --mohr-easing: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* Demo-only page chrome — delete when embedding */
+  body {
+    margin: 0;
+    background: var(--mohr-bg-0);
+    color: var(--mohr-ink);
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ MOHR MOTION SECTION ============ */
+  .mohr-motion {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background:
+      radial-gradient(80% 60% at 80% 0%, rgba(255, 91, 31, 0.18), transparent 60%),
+      radial-gradient(70% 50% at 0% 100%, rgba(110, 231, 255, 0.12), transparent 60%),
+      linear-gradient(180deg, var(--mohr-bg-0), var(--mohr-bg-1));
+    padding: clamp(80px, 12vw, 160px) clamp(20px, 5vw, 80px);
+    color: var(--mohr-ink);
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  /* Animated grain + grid */
+  .mohr-motion::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(var(--mohr-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--mohr-line) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    z-index: 0;
+    animation: mohr-grid-drift 30s linear infinite;
+  }
+  @keyframes mohr-grid-drift {
+    from { background-position: 0 0, 0 0; }
+    to   { background-position: 80px 80px, 80px 80px; }
+  }
+
+  /* Floating orbs */
+  .mohr-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.55;
+    z-index: 0;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .mohr-orb.a { width: 420px; height: 420px; top: -120px; right: -80px;
+    background: radial-gradient(circle, var(--mohr-accent), transparent 60%);
+    animation: mohr-float-a 14s ease-in-out infinite; }
+  .mohr-orb.b { width: 360px; height: 360px; bottom: -140px; left: 10%;
+    background: radial-gradient(circle, var(--mohr-accent-3), transparent 60%);
+    animation: mohr-float-b 18s ease-in-out infinite; }
+  .mohr-orb.c { width: 240px; height: 240px; top: 40%; left: 45%;
+    background: radial-gradient(circle, var(--mohr-accent-4), transparent 60%);
+    animation: mohr-float-c 22s ease-in-out infinite; }
+  @keyframes mohr-float-a { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-30px,40px)} }
+  @keyframes mohr-float-b { 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,-30px)} }
+  @keyframes mohr-float-c { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,20px) scale(1.1)} }
+
+  .mohr-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+
+  .mohr-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mohr-ink-dim);
+    margin-bottom: 28px;
+  }
+  .mohr-eyebrow::before {
+    content: "";
+    width: 28px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--mohr-accent));
+  }
+  .mohr-eyebrow .pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--mohr-accent);
+    box-shadow: 0 0 0 0 rgba(255,91,31, .7);
+    animation: mohr-pulse 2s infinite;
+  }
+  @keyframes mohr-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(255,91,31, .6); }
+    70%  { box-shadow: 0 0 0 14px rgba(255,91,31, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,91,31, 0); }
+  }
+
+  .mohr-headline {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(40px, 6vw, 84px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    font-weight: 600;
+    margin: 0 0 18px;
+    max-width: 16ch;
+  }
+  .mohr-headline .grad {
+    background: linear-gradient(120deg, var(--mohr-ink), var(--mohr-accent) 60%, var(--mohr-accent-2));
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+  }
+
+  .mohr-sub {
+    color: var(--mohr-ink-dim);
+    font-size: clamp(15px, 1.2vw, 18px);
+    max-width: 56ch;
+    line-height: 1.6;
+    margin: 0 0 64px;
+  }
+
+  /* ============ KINETIC LETTER STAGE ============ */
+  .mohr-stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(8px, 1.2vw, 18px);
+    border-top: 1px solid var(--mohr-line);
+    border-bottom: 1px solid var(--mohr-line);
+    padding: clamp(28px, 4vw, 56px) 0;
+  }
+
+  .mohr-letter {
+    position: relative;
+    cursor: pointer;
+    padding: clamp(20px, 2.4vw, 40px) clamp(14px, 1.6vw, 24px);
+    border-radius: 18px;
+    transition: background .6s var(--mohr-easing), transform .6s var(--mohr-easing);
+    overflow: hidden;
+    min-height: clamp(220px, 26vw, 360px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+    border: 1px solid var(--mohr-line);
+  }
+  .mohr-letter::after {
+    /* sweeping highlight */
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%);
+    transform: translateX(-120%);
+    transition: transform 1s var(--mohr-easing);
+    pointer-events: none;
+  }
+  .mohr-letter:hover,
+  .mohr-letter.is-active {
+    background: linear-gradient(180deg, rgba(255,91,31,0.08), rgba(255,91,31,0));
+    border-color: rgba(255,91,31,0.35);
+    transform: translateY(-4px);
+  }
+  .mohr-letter:hover::after,
+  .mohr-letter.is-active::after { transform: translateX(120%); }
+
+  .mohr-letter .glyph {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-weight: 700;
+    font-size: clamp(96px, 13vw, 200px);
+    line-height: 0.85;
+    letter-spacing: -0.06em;
+    color: var(--mohr-ink);
+    position: relative;
+    display: inline-block;
+  }
+  .mohr-letter .glyph::before {
+    /* gradient duplicate that fades in on active */
+    content: attr(data-letter);
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, var(--mohr-accent), var(--mohr-accent-2));
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+    opacity: 0;
+    transition: opacity .5s var(--mohr-easing);
+  }
+  .mohr-letter:hover .glyph::before,
+  .mohr-letter.is-active .glyph::before { opacity: 1; }
+
+  .mohr-letter .word {
+    font-size: clamp(22px, 2vw, 32px);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-top: 16px;
+    overflow: hidden;
+    height: 1.1em;
+  }
+  .mohr-letter .word span {
+    display: inline-block;
+    transform: translateY(110%);
+    transition: transform .7s var(--mohr-easing);
+  }
+  .mohr-letter:hover .word span,
+  .mohr-letter.is-active .word span { transform: translateY(0); }
+
+  .mohr-letter .copy {
+    color: var(--mohr-ink-dim);
+    font-size: 14.5px;
+    line-height: 1.55;
+    margin-top: 14px;
+    max-width: 28ch;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .6s var(--mohr-easing) .1s, transform .6s var(--mohr-easing) .1s;
+  }
+  .mohr-letter:hover .copy,
+  .mohr-letter.is-active .copy { opacity: 1; transform: translateY(0); }
+
+  .mohr-letter .index {
+    position: absolute;
+    top: clamp(14px, 1.4vw, 22px);
+    right: clamp(14px, 1.4vw, 22px);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--mohr-ink-dim);
+  }
+
+  /* Marquee */
+  .mohr-marquee {
+    margin-top: 56px;
+    overflow: hidden;
+    border-top: 1px solid var(--mohr-line);
+    padding-top: 32px;
+    mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  }
+  .mohr-marquee-track {
+    display: flex;
+    gap: 64px;
+    width: max-content;
+    animation: mohr-marquee 28s linear infinite;
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(28px, 3.6vw, 56px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .mohr-marquee-track span { color: var(--mohr-ink); }
+  .mohr-marquee-track span.dim { color: var(--mohr-ink-dim); }
+  .mohr-marquee-track .dot {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--mohr-accent);
+    align-self: center;
+  }
+  @keyframes mohr-marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* CTA row */
+  .mohr-cta-row {
+    margin-top: 56px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+  }
+  .mohr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.005em;
+    text-decoration: none;
+    transition: transform .3s var(--mohr-easing), background .3s, box-shadow .3s;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .mohr-btn-primary {
+    background: var(--mohr-accent);
+    color: #0a0a0d;
+    box-shadow: 0 10px 30px -10px rgba(255, 91, 31, 0.55);
+  }
+  .mohr-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 40px -12px rgba(255, 91, 31, 0.65);
+  }
+  .mohr-btn-ghost {
+    color: var(--mohr-ink);
+    border-color: var(--mohr-line);
+    background: transparent;
+  }
+  .mohr-btn-ghost:hover {
+    border-color: rgba(246,245,239,0.35);
+    transform: translateY(-2px);
+  }
+  .mohr-btn .arrow { transition: transform .3s var(--mohr-easing); }
+  .mohr-btn:hover .arrow { transform: translateX(4px); }
+
+  /* Reveal-on-scroll */
+  .mohr-reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .9s var(--mohr-easing), transform .9s var(--mohr-easing);
+  }
+  .mohr-reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .mohr-reveal.d1 { transition-delay: .05s; }
+  .mohr-reveal.d2 { transition-delay: .15s; }
+  .mohr-reveal.d3 { transition-delay: .25s; }
+  .mohr-reveal.d4 { transition-delay: .35s; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .mohr-stage { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 520px) {
+    .mohr-stage { grid-template-columns: 1fr; }
+    .mohr-letter { min-height: auto; }
+  }
+
+  /* Reduce motion respect */
+  @media (prefers-reduced-motion: reduce) {
+    .mohr-motion *,
+    .mohr-motion *::before,
+    .mohr-motion *::after {
+      animation-duration: 0.001s !important;
+      transition-duration: 0.001s !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<section class="mohr-motion" aria-label="What MOHR stands for">
+  <div class="mohr-orb a"></div>
+  <div class="mohr-orb b"></div>
+  <div class="mohr-orb c"></div>
+
+  <div class="mohr-inner">
+    <div class="mohr-eyebrow mohr-reveal d1">
+      <span class="pulse" aria-hidden="true"></span>
+      <span>The MOHR Method</span>
+    </div>
+
+    <h2 class="mohr-headline mohr-reveal d2">
+      Four moves. <span class="grad">One signal that travels.</span>
+    </h2>
+
+    <p class="mohr-sub mohr-reveal d3">
+      Mohr Media isn't a name — it's a process. Every campaign we ship runs the
+      same loop: <em>Move</em> the audience, <em>Optimize</em> what works,
+      <em>Harness</em> the data, <em>Run</em> it back at scale.
+    </p>
+
+    <div class="mohr-stage mohr-reveal d4" role="list">
+      <article class="mohr-letter is-active" role="listitem" data-step="0">
+        <span class="index">01 / MOVE</span>
+        <span class="glyph" data-letter="M" aria-hidden="true">M</span>
+        <div>
+          <div class="word"><span>Move</span></div>
+          <p class="copy">Stop audiences mid-scroll with creative built for the platform, not retrofitted to it.</p>
+        </div>
+      </article>
+
+      <article class="mohr-letter" role="listitem" data-step="1">
+        <span class="index">02 / OPTIMIZE</span>
+        <span class="glyph" data-letter="O" aria-hidden="true">O</span>
+        <div>
+          <div class="word"><span>Optimize</span></div>
+          <p class="copy">Test variants daily, kill the losers fast, and compound the winners into the next round.</p>
+        </div>
+      </article>
+
+      <article class="mohr-letter" role="listitem" data-step="2">
+        <span class="index">03 / HARNESS</span>
+        <span class="glyph" data-letter="H" aria-hidden="true">H</span>
+        <div>
+          <div class="word"><span>Harness</span></div>
+          <p class="copy">Turn raw signal — clicks, dwell, conversions — into a brief the next ad already knows how to beat.</p>
+        </div>
+      </article>
+
+      <article class="mohr-letter" role="listitem" data-step="3">
+        <span class="index">04 / RUN</span>
+        <span class="glyph" data-letter="R" aria-hidden="true">R</span>
+        <div>
+          <div class="word"><span>Run</span></div>
+          <p class="copy">Scale the winning loop across channels, geos and budget tiers — without losing the original signal.</p>
+        </div>
+      </article>
+    </div>
+
+    <div class="mohr-marquee mohr-reveal d4" aria-hidden="true">
+      <div class="mohr-marquee-track">
+        <span>Move</span><span class="dot"></span>
+        <span class="dim">Optimize</span><span class="dot"></span>
+        <span>Harness</span><span class="dot"></span>
+        <span class="dim">Run</span><span class="dot"></span>
+        <span>Move</span><span class="dot"></span>
+        <span class="dim">Optimize</span><span class="dot"></span>
+        <span>Harness</span><span class="dot"></span>
+        <span class="dim">Run</span><span class="dot"></span>
+        <!-- duplicate for seamless loop -->
+        <span>Move</span><span class="dot"></span>
+        <span class="dim">Optimize</span><span class="dot"></span>
+        <span>Harness</span><span class="dot"></span>
+        <span class="dim">Run</span><span class="dot"></span>
+        <span>Move</span><span class="dot"></span>
+        <span class="dim">Optimize</span><span class="dot"></span>
+        <span>Harness</span><span class="dot"></span>
+        <span class="dim">Run</span><span class="dot"></span>
+      </div>
+    </div>
+
+    <div class="mohr-cta-row mohr-reveal d4">
+      <a href="#contact" class="mohr-btn mohr-btn-primary">
+        Run the loop on your brand
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+      <a href="#work" class="mohr-btn mohr-btn-ghost">
+        See it in production
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  const root = document.querySelector('.mohr-motion');
+  if (!root) return;
+
+  // 1. Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  root.querySelectorAll('.mohr-reveal').forEach((el) => io.observe(el));
+
+  // 2. Auto-cycle the active letter (pause on hover)
+  const letters = Array.from(root.querySelectorAll('.mohr-letter'));
+  let i = 0;
+  let timer = null;
+  let paused = false;
+
+  function setActive(idx) {
+    letters.forEach((l, n) => l.classList.toggle('is-active', n === idx));
+  }
+
+  function tick() {
+    if (paused) return;
+    i = (i + 1) % letters.length;
+    setActive(i);
+  }
+
+  function start() {
+    stop();
+    timer = setInterval(tick, 2400);
+  }
+  function stop() {
+    if (timer) clearInterval(timer);
+    timer = null;
+  }
+
+  letters.forEach((l, idx) => {
+    l.addEventListener('mouseenter', () => { paused = true; i = idx; setActive(idx); });
+    l.addEventListener('mouseleave', () => { paused = false; });
+    l.addEventListener('focus', () => { paused = true; i = idx; setActive(idx); });
+    l.addEventListener('blur', () => { paused = false; });
+    l.addEventListener('click', () => { i = idx; setActive(idx); });
+  });
+
+  // Only autoplay when section is visible
+  const visIo = new IntersectionObserver((entries) => {
+    entries.forEach((e) => (e.isIntersecting ? start() : stop()));
+  }, { threshold: 0.25 });
+  visIo.observe(root);
+
+  // Respect reduced motion
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    stop();
+    letters.forEach((l) => l.classList.add('is-active'));
+  }
+})();
+</script>
+
+</body>
+</html>
